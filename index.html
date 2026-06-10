@@ -209,7 +209,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
     <!-- TAB: HISTORY -->
     <div id="tab-history" style="display:none">
-      <div class="section-hd">Past 14 days</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
+        <div class="section-hd" style="margin:0">Past 14 days</div>
+        <button onclick="exportCSV()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
       <div id="history-list"></div>
     </div>
   </div>
@@ -439,6 +445,33 @@ function render(){
       </div>`;
     }).join('');
   }
+}
+
+function exportCSV(){
+  const allDays=Object.keys(state.entries).sort();
+  if(!allDays.length){toast('No data to export');return;}
+  const rows=[['Date','Time','Description','Type','Amount (BDT)']];
+  allDays.forEach(day=>{
+    (state.entries[day]||[]).forEach(e=>{
+      rows.push([day, e.time||'', '"'+e.desc.replace(/"/g,'""')+'"', e.type==='exp'?'Expense':'Income', e.amt.toFixed(2)]);
+    });
+  });
+  // Fund log
+  rows.push([]);
+  rows.push(['--- Fund Log ---']);
+  rows.push(['Timestamp','Action','Balance After']);
+  (state.fundLog||[]).forEach(l=>{
+    rows.push(['"'+l.time+'"','"'+l.msg+'"',Number(l.result).toFixed(2)]);
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='mymoney-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV downloaded!');
 }
 
 // Enter key shortcuts

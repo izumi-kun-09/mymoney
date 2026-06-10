@@ -150,6 +150,23 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* TOAST */
 .toast{position:fixed;top:calc(var(--safe-top) + 60px);left:50%;transform:translateX(-50%) translateY(-10px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:40px;font-size:13px;opacity:0;transition:all 0.25s;z-index:99;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* BUDGET TABLE */
+.budget-name-input{font-size:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;color:var(--text);outline:none;width:100%}
+.budget-name-input:focus{border-color:var(--green)}
+.budget-num-input{font-size:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;color:var(--text);outline:none;width:100%;text-align:right;-webkit-appearance:none}
+.budget-num-input:focus{border-color:var(--green)}
+.budget-wrap{background:var(--surface);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.budget-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.budget-table th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:10px 8px;text-align:right;border-bottom:1px solid var(--border);font-weight:500}
+.budget-table th:first-child{text-align:left}
+.budget-table td{padding:5px 4px;vertical-align:middle;border-bottom:1px solid var(--border)}
+.budget-table tr:last-child td{border-bottom:none}
+.del-row-btn{background:none;border:none;cursor:pointer;color:var(--hint);font-size:15px;padding:4px 6px;line-height:1}
+.del-row-btn:active{color:var(--red)}
+.add-row-btn{display:flex;align-items:center;gap:8px;padding:13px 16px;font-size:14px;color:var(--green);background:none;border:none;cursor:pointer;width:100%;border-top:1px solid var(--border)}
+.budget-total-row td{padding:11px 8px;font-weight:600;font-size:14px;background:var(--surface2)}
+.budget-total-amt{text-align:right;color:var(--amber)}
+.budget-summary-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -207,6 +224,40 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <div id="fund-log"></div>
     </div>
 
+    <!-- TAB: BUDGET -->
+    <div id="tab-budget" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
+        <div class="section-hd" style="margin:0">Budget planner</div>
+        <button onclick="exportBudgetCSV()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+      </div>
+      <div class="budget-summary-cards" id="budget-summary-cards"></div>
+      <div class="budget-wrap">
+        <table class="budget-table">
+          <colgroup>
+            <col style="width:36%"/>
+            <col style="width:14%"/>
+            <col style="width:22%"/>
+            <col style="width:22%"/>
+            <col style="width:6%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="text-align:left;padding-left:14px">Aspect</th>
+              <th style="text-align:right">#</th>
+              <th style="text-align:right">Unit ৳</th>
+              <th style="text-align:right">Total ৳</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="budget-tbody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addBudgetRow()">+ Add row</button>
+      </div>
+    </div>
+
     <!-- TAB: HISTORY -->
     <div id="tab-history" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
@@ -229,6 +280,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <button class="nav-btn" id="nav-fund" onclick="switchTab('fund',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
       Fund
+    </button>
+    <button class="nav-btn" id="nav-budget" onclick="switchTab('budget',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Budget
     </button>
     <button class="nav-btn" id="nav-history" onclick="switchTab('history',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
@@ -269,7 +324,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 <script>
 const FMT = n => '৳' + Math.abs(Number(n)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-let state = {fund:0,entries:{},fundLog:[]};
+let state = {fund:0,entries:{},fundLog:[],budgetRows:[]};
 let entryType = 'exp';
 let currentTab = 'today';
 
@@ -348,13 +403,14 @@ function adjustFund(op){
 
 function switchTab(name,el){
   currentTab=name;
-  ['today','fund','history'].forEach(t=>{
+  ['today','fund','budget','history'].forEach(t=>{
     document.getElementById('tab-'+t).style.display=t===name?'block':'none';
   });
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('fab-wrap').style.display=name==='today'?'block':'none';
   document.getElementById('scroll-area').scrollTop=0;
+  if(name==='budget')renderBudget();
   render();
 }
 
@@ -421,6 +477,9 @@ function render(){
       </div>`).join('')+`</div>`;
   }
 
+  // BUDGET (render only when visible)
+  if(currentTab==='budget')renderBudget();
+
   // HISTORY
   const hlist=document.getElementById('history-list');
   const days=Object.keys(state.entries).sort().reverse().slice(0,14);
@@ -446,6 +505,89 @@ function render(){
     }).join('');
   }
 }
+
+function addBudgetRow(aspect='',qty=1,unitExp=0){
+  state.budgetRows.push({id:Date.now()+Math.random(),aspect,qty,unitExp});
+  save();renderBudget();
+}
+
+function updateBudgetRow(id,field,val){
+  const row=state.budgetRows.find(r=>r.id===id);
+  if(!row)return;
+  if(field==='qty')row.qty=parseFloat(val)||0;
+  else if(field==='unitExp')row.unitExp=parseFloat(val)||0;
+  else if(field==='aspect')row.aspect=val;
+  save();renderBudgetTotal();
+}
+
+function deleteBudgetRow(id){
+  state.budgetRows=state.budgetRows.filter(r=>r.id!==id);
+  save();renderBudget();
+}
+
+function renderBudgetTotal(){
+  const total=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  document.getElementById('budget-grand-total').textContent=total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  renderBudgetSummary(total);
+}
+
+function renderBudgetSummary(total){
+  const cards=document.getElementById('budget-summary-cards');
+  if(!cards)return;
+  const count=state.budgetRows.length;
+  cards.innerHTML=`
+    <div class="stat"><div class="stat-label">Total budget</div><div class="stat-value" style="color:var(--amber)">৳${Number(total).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>
+    <div class="stat"><div class="stat-label">Line items</div><div class="stat-value">${count}</div></div>`;
+}
+
+function renderBudget(){
+  const tbody=document.getElementById('budget-tbody');
+  if(!tbody)return;
+  if(!state.budgetRows.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);font-size:14px">No rows yet — tap "+ Add row"</td></tr>`;
+    renderBudgetSummary(0);
+    const tot=document.getElementById('budget-grand-total');
+    if(tot)tot.textContent='0';
+    return;
+  }
+  const rows=state.budgetRows.map(r=>{
+    const total=(r.qty||0)*(r.unitExp||0);
+    return `<tr>
+      <td style="padding:5px 4px 5px 10px"><input class="budget-name-input" value="${r.aspect.replace(/"/g,'&quot;')}" placeholder="Aspect" oninput="updateBudgetRow(${r.id},'aspect',this.value)" /></td>
+      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.qty}" min="0" step="any" oninput="updateBudgetRow(${r.id},'qty',this.value)" /></td>
+      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.unitExp}" min="0" step="any" oninput="updateBudgetRow(${r.id},'unitExp',this.value)" /></td>
+      <td style="padding:5px 8px 5px 4px;text-align:right;font-size:14px;font-weight:600;color:var(--amber)">${total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
+      <td style="padding:5px 6px"><button class="del-row-btn" onclick="deleteBudgetRow(${r.id})" aria-label="Delete row">✕</button></td>
+    </tr>`;
+  }).join('');
+  const grandTotal=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  tbody.innerHTML=rows+`<tr class="budget-total-row">
+    <td style="padding-left:10px;color:var(--muted);font-size:13px" colspan="3">Grand total</td>
+    <td class="budget-total-amt" style="padding-right:8px" id="budget-grand-total">${grandTotal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
+    <td></td>
+  </tr>`;
+  renderBudgetSummary(grandTotal);
+}
+
+function exportBudgetCSV(){
+  if(!state.budgetRows.length){toast('No budget rows to export');return;}
+  const rows=[['Aspect','Quantity','Unit Expense (BDT)','Total Expense (BDT)']];
+  state.budgetRows.forEach(r=>{
+    rows.push(['"'+r.aspect.replace(/"/g,'""')+'"',r.qty,r.unitExp.toFixed(2),(r.qty*r.unitExp).toFixed(2)]);
+  });
+  const grand=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  rows.push(['Grand Total','','',grand.toFixed(2)]);
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='budget-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Budget exported!');
+}
+
 
 function exportCSV(){
   const allDays=Object.keys(state.entries).sort();

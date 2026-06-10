@@ -15,36 +15,53 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#0f0f0f;
-  --surface:#1a1a1a;
-  --surface2:#242424;
-  --border:#2e2e2e;
-  --text:#f0f0f0;
-  --muted:#888;
-  --hint:#555;
-  --green:#22c97e;
-  --green-dim:#0d3d26;
-  --red:#f05c5c;
-  --red-dim:#3d1515;
-  --amber:#f0b429;
-  --amber-dim:#3d2e0a;
-  --radius:14px;
-  --radius-sm:10px;
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#242424;--border:#2e2e2e;
+  --text:#f0f0f0;--muted:#888;--hint:#555;
+  --green:#22c97e;--green-dim:#0d3d26;
+  --red:#f05c5c;--red-dim:#3d1515;
+  --amber:#f0b429;--amber-dim:#3d2e0a;
+  --blue:#4e9eff;--blue-dim:#0d2a4a;
+  --radius:14px;--radius-sm:10px;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px}
 #app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top)}
 
-/* STATUS BAR AREA */
-.status-bar{height:8px}
+/* AUTH SCREEN */
+#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;padding-top:calc(var(--safe-top) + 32px)}
+.auth-logo{font-size:40px;margin-bottom:8px}
+.auth-title{font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px}
+.auth-sub{font-size:14px;color:var(--muted);margin-bottom:40px}
+.auth-box{width:100%;max-width:360px}
+.auth-tabs{display:flex;background:var(--surface);border-radius:var(--radius-sm);padding:4px;gap:4px;margin-bottom:24px}
+.auth-tab{flex:1;padding:9px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:14px;font-weight:500;cursor:pointer}
+.auth-tab.active{background:var(--surface2);color:var(--text)}
+.auth-field{margin-bottom:14px}
+.auth-field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
+.auth-field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;font-size:16px;color:var(--text);outline:none;-webkit-appearance:none}
+.auth-field input:focus{border-color:var(--green)}
+.auth-btn{width:100%;padding:15px;border-radius:var(--radius);border:none;background:var(--green);color:#0f0f0f;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
+.auth-btn:active{opacity:0.8}
+.auth-err{font-size:13px;color:var(--red);text-align:center;margin-top:10px;min-height:20px}
+.auth-loading{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:14px;margin-top:10px}
 
-/* HEADER */
+/* TOPBAR */
+.status-bar{height:8px}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 8px}
 .topbar-title{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.topbar-right{display:flex;align-items:center;gap:10px}
 .topbar-date{font-size:13px;color:var(--muted)}
+.sync-btn{background:none;border:none;cursor:pointer;padding:4px;color:var(--muted);display:flex;align-items:center}
+.sync-btn svg{width:18px;height:18px}
+.sync-btn.syncing svg{animation:spin 1s linear infinite}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-dot.online{background:var(--green)}
+.sync-dot.offline{background:var(--amber)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logout-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:4px 8px}
 
-/* HERO BALANCE */
+/* HERO */
 .hero{padding:8px 20px 20px;text-align:center}
 .hero-label{font-size:13px;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px}
 .hero-amount{font-size:52px;font-weight:700;letter-spacing:-2px;color:var(--green);line-height:1}
@@ -64,11 +81,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .spend-bar-lbl{display:flex;justify-content:space-between;margin-top:5px}
 .spend-bar-lbl span{font-size:11px;color:var(--hint)}
 
-/* SCROLL CONTENT */
+/* SCROLL */
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px}
 .scroll-area::-webkit-scrollbar{display:none}
-
-/* SECTION HEADER */
 .section-hd{font-size:11px;color:var(--muted);letter-spacing:0.6px;text-transform:uppercase;padding:0 4px;margin:16px 0 8px}
 
 /* ENTRY CARD */
@@ -86,11 +101,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .entry-amt.inc{color:var(--green)}
 .entry-del{padding:6px;color:var(--hint);font-size:18px;background:none;border:none;cursor:pointer;margin-left:4px}
 
-/* EMPTY STATE */
+/* EMPTY */
 .empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty-state p{font-size:15px;margin-top:8px}
 
-/* FUND ADJUSTMENTS */
+/* FUND */
 .fund-adj{background:var(--surface);border-radius:var(--radius);padding:4px 0;margin-bottom:16px}
 .fund-adj-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;gap:10px}
 .fund-adj-row+.fund-adj-row{border-top:1px solid var(--border)}
@@ -121,7 +136,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .fab{width:56px;height:56px;border-radius:50%;background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0f0f0f;font-size:28px;font-weight:300;box-shadow:0 4px 20px rgba(34,201,126,0.35);transition:transform 0.15s}
 .fab:active{transform:scale(0.93)}
 
-/* SHEET / MODAL */
+/* SHEET */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:20;opacity:0;pointer-events:none;transition:opacity 0.25s;backdrop-filter:blur(4px)}
 .overlay.open{opacity:1;pointer-events:all}
 .sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:24px 24px 0 0;padding:0 20px;padding-bottom:calc(28px + var(--safe-bottom));z-index:30;transform:translateY(110%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)}
@@ -129,7 +144,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 20px}
 .sheet-title{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center}
 
-/* FORM ELEMENTS */
+/* FORM */
 .field{margin-bottom:14px}
 .field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
 .field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;font-size:16px;color:var(--text);outline:none;-webkit-appearance:none}
@@ -147,10 +162,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .fund-act-btn.add{border-color:var(--green);color:var(--green);background:var(--green-dim)}
 .fund-act-btn.sub{border-color:var(--red);color:var(--red);background:var(--red-dim)}
 
-/* TOAST */
-.toast{position:fixed;top:calc(var(--safe-top) + 60px);left:50%;transform:translateX(-50%) translateY(-10px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:40px;font-size:13px;opacity:0;transition:all 0.25s;z-index:99;white-space:nowrap;pointer-events:none}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* BUDGET TABLE */
+/* BUDGET */
 .budget-name-input{font-size:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;color:var(--text);outline:none;width:100%}
 .budget-name-input:focus{border-color:var(--green)}
 .budget-num-input{font-size:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;color:var(--text);outline:none;width:100%;text-align:right;-webkit-appearance:none}
@@ -167,18 +179,65 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .budget-total-row td{padding:11px 8px;font-weight:600;font-size:14px;background:var(--surface2)}
 .budget-total-amt{text-align:right;color:var(--amber)}
 .budget-summary-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:var(--surface);border-radius:var(--radius-sm);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:600;letter-spacing:-0.5px}
+
+/* TOAST */
+.toast{position:fixed;top:calc(var(--safe-top) + 60px);left:50%;transform:translateX(-50%) translateY(-10px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 18px;border-radius:40px;font-size:13px;opacity:0;transition:all 0.25s;z-index:200;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* OFFLINE BANNER */
+.offline-banner{background:var(--amber-dim);border-bottom:1px solid var(--amber);color:var(--amber);font-size:12px;text-align:center;padding:6px;display:none}
+.offline-banner.show{display:block}
 </style>
 </head>
 <body>
-<div id="app">
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-logo">💰</div>
+  <div class="auth-title">My Money</div>
+  <div class="auth-sub">Your personal finance tracker</div>
+  <div class="auth-box">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="authTab('login')">Log in</button>
+      <button class="auth-tab" id="tab-signup" onclick="authTab('signup')">Sign up</button>
+    </div>
+    <div class="auth-field">
+      <label>Username</label>
+      <input type="text" id="auth-username" placeholder="your_username" autocomplete="username" autocapitalize="none"/>
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div class="auth-field" id="auth-confirm-wrap" style="display:none">
+      <label>Confirm password</label>
+      <input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password"/>
+    </div>
+    <button class="auth-btn" id="auth-submit-btn" onclick="authSubmit()">Log in</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
   <div class="status-bar"></div>
+  <div class="offline-banner" id="offline-banner">⚡ Offline — changes saved locally and will sync when reconnected</div>
 
   <div class="topbar">
     <span class="topbar-title">My Money</span>
-    <span class="topbar-date" id="top-date"></span>
+    <div class="topbar-right">
+      <span class="sync-dot online" id="sync-dot" title="Online"></span>
+      <button class="sync-btn" id="sync-btn" onclick="syncNow()" title="Sync now">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      </button>
+      <span class="topbar-date" id="top-date"></span>
+      <button class="logout-btn" onclick="logOut()">out</button>
+    </div>
   </div>
 
-  <!-- HERO -->
   <div class="hero">
     <div class="hero-label">Fund balance</div>
     <div class="hero-amount" id="hero-fund">৳0</div>
@@ -200,21 +259,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div class="spend-bar-lbl"><span>Daily spend</span><span id="bar-pct">0%</span></div>
   </div>
 
-  <!-- SCROLLABLE -->
   <div class="scroll-area" id="scroll-area">
-    <!-- TAB: TODAY -->
+    <!-- TODAY -->
     <div id="tab-today">
-      <div class="section-hd" id="today-hd">Today's entries</div>
+      <div class="section-hd">Today's entries</div>
       <div id="entry-list"></div>
     </div>
 
-    <!-- TAB: FUND -->
+    <!-- FUND -->
     <div id="tab-fund" style="display:none">
       <div class="section-hd">Adjust fund</div>
-      <div class="field">
-        <label>Amount (৳)</label>
-        <input type="number" id="fund-input" placeholder="0" inputmode="decimal"/>
-      </div>
+      <div class="field"><label>Amount (৳)</label><input type="number" id="fund-input" placeholder="0" inputmode="decimal"/></div>
       <div class="fund-btns">
         <button class="fund-act-btn set" onclick="adjustFund('set')">Set</button>
         <button class="fund-act-btn add" onclick="adjustFund('add')">+ Add</button>
@@ -224,7 +279,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <div id="fund-log"></div>
     </div>
 
-    <!-- TAB: BUDGET -->
+    <!-- BUDGET -->
     <div id="tab-budget" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
         <div class="section-hd" style="margin:0">Budget planner</div>
@@ -236,29 +291,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       <div class="budget-summary-cards" id="budget-summary-cards"></div>
       <div class="budget-wrap">
         <table class="budget-table">
-          <colgroup>
-            <col style="width:36%"/>
-            <col style="width:14%"/>
-            <col style="width:22%"/>
-            <col style="width:22%"/>
-            <col style="width:6%"/>
-          </colgroup>
-          <thead>
-            <tr>
-              <th style="text-align:left;padding-left:14px">Aspect</th>
-              <th style="text-align:right">#</th>
-              <th style="text-align:right">Unit ৳</th>
-              <th style="text-align:right">Total ৳</th>
-              <th></th>
-            </tr>
-          </thead>
+          <colgroup><col style="width:36%"/><col style="width:14%"/><col style="width:22%"/><col style="width:22%"/><col style="width:6%"/></colgroup>
+          <thead><tr>
+            <th style="text-align:left;padding-left:14px">Aspect</th>
+            <th style="text-align:right">#</th>
+            <th style="text-align:right">Unit ৳</th>
+            <th style="text-align:right">Total ৳</th>
+            <th></th>
+          </tr></thead>
           <tbody id="budget-tbody"></tbody>
         </table>
         <button class="add-row-btn" onclick="addBudgetRow()">+ Add row</button>
       </div>
     </div>
 
-    <!-- TAB: HISTORY -->
+    <!-- HISTORY -->
     <div id="tab-history" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
         <div class="section-hd" style="margin:0">Past 14 days</div>
@@ -271,7 +318,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-today" onclick="switchTab('today',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -292,15 +338,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </nav>
 </div>
 
-<!-- FAB -->
 <div class="fab-wrap" id="fab-wrap">
   <button class="fab" onclick="openSheet()" aria-label="Add entry">+</button>
 </div>
 
-<!-- OVERLAY -->
 <div class="overlay" id="overlay" onclick="closeSheet()"></div>
-
-<!-- ADD ENTRY SHEET -->
 <div class="sheet" id="sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title">New entry</div>
@@ -308,37 +350,237 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <button class="type-btn sel-exp" id="btn-exp" onclick="setType('exp')">− Expense</button>
     <button class="type-btn" id="btn-inc" onclick="setType('inc')">+ Income</button>
   </div>
-  <div class="field">
-    <label>Description</label>
-    <input type="text" id="desc-input" placeholder="e.g. Lunch, Rickshaw..." autocomplete="off"/>
-  </div>
-  <div class="field">
-    <label>Amount (৳)</label>
-    <input type="number" id="amt-input" placeholder="0" inputmode="decimal"/>
-  </div>
+  <div class="field"><label>Description</label><input type="text" id="desc-input" placeholder="e.g. Lunch, Rickshaw..." autocomplete="off"/></div>
+  <div class="field"><label>Amount (৳)</label><input type="number" id="amt-input" placeholder="0" inputmode="decimal"/></div>
   <button class="submit-btn" onclick="addEntry()">Save entry</button>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-const FMT = n => '৳' + Math.abs(Number(n)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-let state = {fund:0,entries:{},fundLog:[],budgetRows:[]};
+// ─── CONFIG ───────────────────────────────────────────────
+const SUPA_URL = 'https://phxwklyzerrmigajsoqw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoeHdrbHl6ZXJybWlnYWpzb3F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwODkzODUsImV4cCI6MjA5NjY2NTM4NX0.D_bXYDmO3RxnvFr9HnhGSN6oXM2LZCK4g-2nDg7xWuE';
+const FAKE_DOMAIN = '@mymoney.local';
+const LS_KEY = 'mymoney_v3';
+const LS_SESSION = 'mymoney_session';
+
+// ─── STATE ────────────────────────────────────────────────
+let state = {fund:0, entries:{}, fundLog:[], budgetRows:[]};
+let session = null; // {access_token, refresh_token, user_id, username}
+let isOnline = navigator.onLine;
+let pendingSync = false;
 let entryType = 'exp';
 let currentTab = 'today';
+let authMode = 'login';
 
-function todayKey(){
-  const d=new Date();
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-function todayEntries(){return state.entries[todayKey()]||[]}
-function setTodayEntries(arr){state.entries[todayKey()]=arr}
+// ─── HELPERS ──────────────────────────────────────────────
+const FMT = n => '৳' + Math.abs(Number(n)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function todayEntries(){return state.entries[todayKey()]||[];}
+function setTodayEntries(arr){state.entries[todayKey()]=arr;}
 
-function load(){
-  try{const s=localStorage.getItem('mymoney_v2');if(s){state=JSON.parse(s);if(!state.entries)state.entries={};if(!state.fundLog)state.fundLog=[];}}catch(e){}
+function toast(msg,dur=2200){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),dur);
 }
-function save(){localStorage.setItem('mymoney_v2',JSON.stringify(state))}
+
+// ─── LOCAL STORAGE ────────────────────────────────────────
+function saveLocal(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}
+}
+function loadLocal(){
+  try{
+    const s=localStorage.getItem(LS_KEY);
+    if(s){state=JSON.parse(s);}
+    if(!state.entries)state.entries={};
+    if(!state.fundLog)state.fundLog=[];
+    if(!state.budgetRows)state.budgetRows=[];
+  }catch(e){}
+}
+function saveSession(s){try{localStorage.setItem(LS_SESSION,JSON.stringify(s));}catch(e){}}
+function loadSession(){try{const s=localStorage.getItem(LS_SESSION);return s?JSON.parse(s):null;}catch(e){return null;}}
+function clearSession(){try{localStorage.removeItem(LS_SESSION);}catch(e){}}
+
+// ─── SUPABASE API ─────────────────────────────────────────
+async function supaFetch(path, opts={}){
+  const headers = {
+    'Content-Type':'application/json',
+    'apikey': SUPA_KEY,
+    'Authorization': `Bearer ${session?.access_token || SUPA_KEY}`,
+    ...opts.headers
+  };
+  const res = await fetch(SUPA_URL+path, {...opts, headers});
+  const text = await res.text();
+  let data;
+  try{data=JSON.parse(text);}catch(e){data=text;}
+  if(!res.ok) throw new Error(data?.message || data?.error_description || JSON.stringify(data));
+  return data;
+}
+
+// Auth
+async function signUp(username, password){
+  const email = username.toLowerCase().trim() + FAKE_DOMAIN;
+  // Create auth user
+  const authData = await supaFetch('/auth/v1/signup', {
+    method:'POST',
+    body: JSON.stringify({email, password})
+  });
+  if(!authData.access_token) throw new Error('Signup failed — try a different username');
+  // Save profile
+  await supaFetch('/rest/v1/profiles', {
+    method:'POST',
+    headers:{'Authorization':`Bearer ${authData.access_token}`,'Prefer':'return=minimal'},
+    body: JSON.stringify({id: authData.user.id, username: username.toLowerCase().trim()})
+  });
+  return {access_token: authData.access_token, refresh_token: authData.refresh_token, user_id: authData.user.id, username: username.toLowerCase().trim()};
+}
+
+async function signIn(username, password){
+  const email = username.toLowerCase().trim() + FAKE_DOMAIN;
+  const authData = await supaFetch('/auth/v1/token?grant_type=password', {
+    method:'POST',
+    body: JSON.stringify({email, password})
+  });
+  if(!authData.access_token) throw new Error('Invalid username or password');
+  return {access_token: authData.access_token, refresh_token: authData.refresh_token, user_id: authData.user.id, username: username.toLowerCase().trim()};
+}
+
+async function signOut(){
+  try{
+    await supaFetch('/auth/v1/logout', {method:'POST'});
+  }catch(e){}
+}
+
+// Data sync
+async function pushData(){
+  if(!session||!isOnline) return;
+  setSyncSpinner(true);
+  try{
+    await supaFetch('/rest/v1/money_data', {
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates'},
+      body: JSON.stringify({id: session.user_id, data: state, updated_at: new Date().toISOString()})
+    });
+    pendingSync = false;
+  }catch(e){
+    pendingSync = true;
+  }finally{setSyncSpinner(false);}
+}
+
+async function pullData(){
+  if(!session||!isOnline) return;
+  setSyncSpinner(true);
+  try{
+    const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data`);
+    if(rows && rows.length && rows[0].data){
+      const remote = rows[0].data;
+      if(!remote.entries) remote.entries={};
+      if(!remote.fundLog) remote.fundLog=[];
+      if(!remote.budgetRows) remote.budgetRows=[];
+      state = remote;
+      saveLocal();
+      render();
+    }
+  }catch(e){}
+  finally{setSyncSpinner(false);}
+}
+
+async function syncNow(){
+  if(!isOnline){toast('You are offline');return;}
+  await pushData();
+  await pullData();
+  toast('Synced ✓');
+}
+
+function setSyncSpinner(on){
+  const btn = document.getElementById('sync-btn');
+  if(btn) btn.classList.toggle('syncing', on);
+}
+
+// ─── ONLINE / OFFLINE ─────────────────────────────────────
+window.addEventListener('online', ()=>{
+  isOnline=true;
+  document.getElementById('sync-dot').className='sync-dot online';
+  document.getElementById('offline-banner').classList.remove('show');
+  if(pendingSync) pushData().then(()=>pullData());
+  else pullData();
+});
+window.addEventListener('offline', ()=>{
+  isOnline=false;
+  document.getElementById('sync-dot').className='sync-dot offline';
+  document.getElementById('offline-banner').classList.add('show');
+});
+
+// ─── AUTH UI ──────────────────────────────────────────────
+function authTab(mode){
+  authMode=mode;
+  document.getElementById('tab-login').className='auth-tab'+(mode==='login'?' active':'');
+  document.getElementById('tab-signup').className='auth-tab'+(mode==='signup'?' active':'');
+  document.getElementById('auth-confirm-wrap').style.display=mode==='signup'?'block':'none';
+  document.getElementById('auth-submit-btn').textContent=mode==='login'?'Log in':'Create account';
+  document.getElementById('auth-err').textContent='';
+}
+
+async function authSubmit(){
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const confirm  = document.getElementById('auth-confirm').value;
+  const errEl    = document.getElementById('auth-err');
+  const btn      = document.getElementById('auth-submit-btn');
+
+  if(!username || !password){errEl.textContent='Enter username and password';return;}
+  if(!/^[a-zA-Z0-9_]{3,20}$/.test(username)){errEl.textContent='Username: 3-20 chars, letters/numbers/underscore only';return;}
+  if(password.length < 6){errEl.textContent='Password must be at least 6 characters';return;}
+  if(authMode==='signup' && password !== confirm){errEl.textContent='Passwords do not match';return;}
+
+  btn.disabled=true; btn.textContent='Please wait...'; errEl.textContent='';
+  try{
+    if(authMode==='signup'){
+      session = await signUp(username, password);
+    } else {
+      session = await signIn(username, password);
+    }
+    saveSession(session);
+    loadLocal();
+    showApp();
+    await pullData();
+  }catch(e){
+    errEl.textContent = e.message || 'Something went wrong';
+    btn.disabled=false;
+    btn.textContent=authMode==='login'?'Log in':'Create account';
+  }
+}
+
+function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  if(!isOnline){
+    document.getElementById('sync-dot').className='sync-dot offline';
+    document.getElementById('offline-banner').classList.add('show');
+  }
+  render();
+}
+
+async function logOut(){
+  await signOut();
+  clearSession();
+  session=null;
+  state={fund:0,entries:{},fundLog:[],budgetRows:[]};
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-username').value='';
+  document.getElementById('auth-password').value='';
+  document.getElementById('auth-err').textContent='';
+}
+
+// ─── APP LOGIC ────────────────────────────────────────────
+function save(){
+  saveLocal();
+  if(isOnline) pushData();
+  else pendingSync=true;
+}
 
 function setType(t){
   entryType=t;
@@ -363,8 +605,8 @@ function addEntry(){
   const entries=todayEntries();
   entries.push({id:Date.now(),desc,amt,type:entryType,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
   setTodayEntries(entries);
-  if(entryType==='exp')state.fund=state.fund-amt;
-  else state.fund+=amt;
+  if(entryType==='exp') state.fund -= amt;
+  else state.fund += amt;
   save();
   document.getElementById('desc-input').value='';
   document.getElementById('amt-input').value='';
@@ -378,12 +620,11 @@ function deleteEntry(id){
   const idx=entries.findIndex(e=>e.id===id);
   if(idx===-1)return;
   const e=entries[idx];
-  if(e.type==='exp')state.fund+=e.amt;
-  else state.fund-=e.amt;
+  if(e.type==='exp') state.fund += e.amt;
+  else state.fund -= e.amt;
   entries.splice(idx,1);
   setTodayEntries(entries);
-  save();
-  render();
+  save(); render();
 }
 
 function adjustFund(op){
@@ -394,11 +635,10 @@ function adjustFund(op){
   else if(op==='add'){state.fund+=v;msg='Added '+FMT(v);}
   else if(op==='sub'){state.fund-=v;msg='Deducted '+FMT(v);}
   state.fundLog.unshift({msg,time:new Date().toLocaleString('en-BD',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),result:state.fund});
-  if(state.fundLog.length>40)state.fundLog=state.fundLog.slice(0,40);
+  if(state.fundLog.length>40) state.fundLog=state.fundLog.slice(0,40);
   save();
   document.getElementById('fund-input').value='';
-  toast(msg);
-  render();
+  toast(msg); render();
 }
 
 function switchTab(name,el){
@@ -410,20 +650,102 @@ function switchTab(name,el){
   el.classList.add('active');
   document.getElementById('fab-wrap').style.display=name==='today'?'block':'none';
   document.getElementById('scroll-area').scrollTop=0;
-  if(name==='budget')renderBudget();
+  if(name==='budget') renderBudget();
   render();
 }
 
-function toast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.classList.add('show');
-  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000);
+// ─── BUDGET ───────────────────────────────────────────────
+function addBudgetRow(){
+  state.budgetRows.push({id:Date.now()+Math.random(),aspect:'',qty:1,unitExp:0});
+  save(); renderBudget();
+}
+function updateBudgetRow(id,field,val){
+  const row=state.budgetRows.find(r=>r.id===id);
+  if(!row)return;
+  if(field==='qty') row.qty=parseFloat(val)||0;
+  else if(field==='unitExp') row.unitExp=parseFloat(val)||0;
+  else if(field==='aspect') row.aspect=val;
+  save(); renderBudgetTotal();
+}
+function deleteBudgetRow(id){
+  state.budgetRows=state.budgetRows.filter(r=>r.id!==id);
+  save(); renderBudget();
+}
+function renderBudgetTotal(){
+  const total=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  const el=document.getElementById('budget-grand-total');
+  if(el) el.textContent=total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  renderBudgetSummary(total);
+}
+function renderBudgetSummary(total){
+  const cards=document.getElementById('budget-summary-cards');
+  if(!cards)return;
+  cards.innerHTML=`
+    <div class="stat"><div class="stat-label">Total budget</div><div class="stat-value" style="color:var(--amber)">৳${Number(total).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>
+    <div class="stat"><div class="stat-label">Line items</div><div class="stat-value">${state.budgetRows.length}</div></div>`;
+}
+function renderBudget(){
+  const tbody=document.getElementById('budget-tbody');
+  if(!tbody)return;
+  if(!state.budgetRows.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);font-size:14px">No rows yet — tap "+ Add row"</td></tr>`;
+    renderBudgetSummary(0); return;
+  }
+  const rows=state.budgetRows.map(r=>{
+    const total=(r.qty||0)*(r.unitExp||0);
+    return `<tr>
+      <td style="padding:5px 4px 5px 10px"><input class="budget-name-input" value="${r.aspect.replace(/"/g,'&quot;')}" placeholder="Aspect" oninput="updateBudgetRow(${r.id},'aspect',this.value)"/></td>
+      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.qty}" min="0" step="any" oninput="updateBudgetRow(${r.id},'qty',this.value)"/></td>
+      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.unitExp}" min="0" step="any" oninput="updateBudgetRow(${r.id},'unitExp',this.value)"/></td>
+      <td style="padding:5px 8px 5px 4px;text-align:right;font-size:14px;font-weight:600;color:var(--amber)">${total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
+      <td style="padding:5px 6px"><button class="del-row-btn" onclick="deleteBudgetRow(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+  const grand=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  tbody.innerHTML=rows+`<tr class="budget-total-row">
+    <td style="padding-left:10px;color:var(--muted);font-size:13px" colspan="3">Grand total</td>
+    <td class="budget-total-amt" style="padding-right:8px" id="budget-grand-total">${grand.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
+    <td></td>
+  </tr>`;
+  renderBudgetSummary(grand);
 }
 
-function catIcon(type){
-  return type==='exp'?'💸':'💰';
+// ─── EXPORTS ──────────────────────────────────────────────
+function exportCSV(){
+  const allDays=Object.keys(state.entries).sort();
+  if(!allDays.length){toast('No data to export');return;}
+  const rows=[['Date','Time','Description','Type','Amount (BDT)']];
+  allDays.forEach(day=>{
+    (state.entries[day]||[]).forEach(e=>{
+      rows.push([day,e.time||'','"'+e.desc.replace(/"/g,'""')+'"',e.type==='exp'?'Expense':'Income',e.amt.toFixed(2)]);
+    });
+  });
+  rows.push([]);rows.push(['--- Fund Log ---']);rows.push(['Timestamp','Action','Balance After']);
+  (state.fundLog||[]).forEach(l=>{
+    rows.push(['"'+l.time+'"','"'+l.msg+'"',Number(l.result).toFixed(2)]);
+  });
+  dl(rows.map(r=>r.join(',')).join('\n'),'mymoney-'+new Date().toISOString().slice(0,10)+'.csv');
+  toast('CSV downloaded!');
+}
+function exportBudgetCSV(){
+  if(!state.budgetRows.length){toast('No budget rows to export');return;}
+  const rows=[['Aspect','Quantity','Unit Expense (BDT)','Total Expense (BDT)']];
+  state.budgetRows.forEach(r=>{
+    rows.push(['"'+r.aspect.replace(/"/g,'""')+'"',r.qty,r.unitExp.toFixed(2),(r.qty*r.unitExp).toFixed(2)]);
+  });
+  const grand=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  rows.push(['Grand Total','','',grand.toFixed(2)]);
+  dl(rows.map(r=>r.join(',')).join('\n'),'budget-'+new Date().toISOString().slice(0,10)+'.csv');
+  toast('Budget exported!');
+}
+function dl(csv,name){
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;a.click();
+  URL.revokeObjectURL(url);
 }
 
+// ─── RENDER ───────────────────────────────────────────────
 function render(){
   const entries=todayEntries();
   const spent=entries.filter(e=>e.type==='exp').reduce((s,e)=>s+e.amt,0);
@@ -434,37 +756,30 @@ function render(){
   fundEl.className='hero-amount'+(state.fund<0?' neg':'');
   document.getElementById('hero-spent').textContent=FMT(spent);
   document.getElementById('hero-earned').textContent=FMT(earned);
-
-  const now=new Date();
-  document.getElementById('top-date').textContent=now.toLocaleDateString('en-BD',{weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('top-date').textContent=new Date().toLocaleDateString('en-BD',{weekday:'short',month:'short',day:'numeric'});
 
   if(spent>0&&(state.fund+spent)>0){
     const pct=Math.min(100,Math.round(spent/(state.fund+spent)*100));
     document.getElementById('bar-wrap').style.display='block';
     document.getElementById('bar-fill').style.width=pct+'%';
     document.getElementById('bar-pct').textContent=pct+'%';
-  } else {
-    document.getElementById('bar-wrap').style.display='none';
-  }
+  } else {document.getElementById('bar-wrap').style.display='none';}
 
-  // TODAY LIST
+  // Today list
   const list=document.getElementById('entry-list');
   if(!entries.length){
     list.innerHTML=`<div class="empty-state"><div style="font-size:36px">📋</div><p>No entries yet.<br/>Tap + to add your first one.</p></div>`;
   } else {
     list.innerHTML=`<div class="entry-card">`+[...entries].reverse().map(e=>`
       <div class="entry-item">
-        <div class="entry-icon ${e.type}">${catIcon(e.type)}</div>
-        <div class="entry-body">
-          <div class="entry-desc">${e.desc}</div>
-          <div class="entry-time">${e.time}</div>
-        </div>
+        <div class="entry-icon ${e.type}">${e.type==='exp'?'💸':'💰'}</div>
+        <div class="entry-body"><div class="entry-desc">${e.desc}</div><div class="entry-time">${e.time}</div></div>
         <div class="entry-amt ${e.type}">${e.type==='exp'?'−':'+'}${FMT(e.amt)}</div>
-        <button class="entry-del" onclick="deleteEntry(${e.id})" aria-label="Delete">✕</button>
+        <button class="entry-del" onclick="deleteEntry(${e.id})">✕</button>
       </div>`).join('')+`</div>`;
   }
 
-  // FUND LOG
+  // Fund log
   const flog=document.getElementById('fund-log');
   if(!state.fundLog.length){
     flog.innerHTML=`<div class="empty-state" style="padding:20px"><p>No adjustments yet</p></div>`;
@@ -477,10 +792,9 @@ function render(){
       </div>`).join('')+`</div>`;
   }
 
-  // BUDGET (render only when visible)
-  if(currentTab==='budget')renderBudget();
+  if(currentTab==='budget') renderBudget();
 
-  // HISTORY
+  // History
   const hlist=document.getElementById('history-list');
   const days=Object.keys(state.entries).sort().reverse().slice(0,14);
   const today=todayKey();
@@ -494,10 +808,7 @@ function render(){
       const net=i-s;
       const lbl=day===today?'Today':new Date(day+'T00:00:00').toLocaleDateString('en-BD',{weekday:'short',month:'short',day:'numeric'});
       return `<div class="history-day">
-        <div class="history-day-hd">
-          <span class="history-day-label">${lbl}</span>
-          <span class="history-day-net ${net>=0?'pos':'neg'}">${net>=0?'+':''}${FMT(net)}</span>
-        </div>
+        <div class="history-day-hd"><span class="history-day-label">${lbl}</span><span class="history-day-net ${net>=0?'pos':'neg'}">${net>=0?'+':''}${FMT(net)}</span></div>
         <div class="history-day-row"><span class="history-sub">Spent</span><span class="history-val" style="color:var(--red)">−${FMT(s)}</span></div>
         ${i>0?`<div class="history-day-row"><span class="history-sub">Earned</span><span class="history-val" style="color:var(--green)">+${FMT(i)}</span></div>`:''}
         <div class="history-day-row"><span class="history-sub">${es.length} entr${es.length===1?'y':'ies'}</span><span class="history-val" style="color:var(--muted)">net</span></div>
@@ -506,121 +817,22 @@ function render(){
   }
 }
 
-function addBudgetRow(aspect='',qty=1,unitExp=0){
-  state.budgetRows.push({id:Date.now()+Math.random(),aspect,qty,unitExp});
-  save();renderBudget();
-}
-
-function updateBudgetRow(id,field,val){
-  const row=state.budgetRows.find(r=>r.id===id);
-  if(!row)return;
-  if(field==='qty')row.qty=parseFloat(val)||0;
-  else if(field==='unitExp')row.unitExp=parseFloat(val)||0;
-  else if(field==='aspect')row.aspect=val;
-  save();renderBudgetTotal();
-}
-
-function deleteBudgetRow(id){
-  state.budgetRows=state.budgetRows.filter(r=>r.id!==id);
-  save();renderBudget();
-}
-
-function renderBudgetTotal(){
-  const total=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
-  document.getElementById('budget-grand-total').textContent=total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  renderBudgetSummary(total);
-}
-
-function renderBudgetSummary(total){
-  const cards=document.getElementById('budget-summary-cards');
-  if(!cards)return;
-  const count=state.budgetRows.length;
-  cards.innerHTML=`
-    <div class="stat"><div class="stat-label">Total budget</div><div class="stat-value" style="color:var(--amber)">৳${Number(total).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>
-    <div class="stat"><div class="stat-label">Line items</div><div class="stat-value">${count}</div></div>`;
-}
-
-function renderBudget(){
-  const tbody=document.getElementById('budget-tbody');
-  if(!tbody)return;
-  if(!state.budgetRows.length){
-    tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);font-size:14px">No rows yet — tap "+ Add row"</td></tr>`;
-    renderBudgetSummary(0);
-    const tot=document.getElementById('budget-grand-total');
-    if(tot)tot.textContent='0';
-    return;
-  }
-  const rows=state.budgetRows.map(r=>{
-    const total=(r.qty||0)*(r.unitExp||0);
-    return `<tr>
-      <td style="padding:5px 4px 5px 10px"><input class="budget-name-input" value="${r.aspect.replace(/"/g,'&quot;')}" placeholder="Aspect" oninput="updateBudgetRow(${r.id},'aspect',this.value)" /></td>
-      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.qty}" min="0" step="any" oninput="updateBudgetRow(${r.id},'qty',this.value)" /></td>
-      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.unitExp}" min="0" step="any" oninput="updateBudgetRow(${r.id},'unitExp',this.value)" /></td>
-      <td style="padding:5px 8px 5px 4px;text-align:right;font-size:14px;font-weight:600;color:var(--amber)">${total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
-      <td style="padding:5px 6px"><button class="del-row-btn" onclick="deleteBudgetRow(${r.id})" aria-label="Delete row">✕</button></td>
-    </tr>`;
-  }).join('');
-  const grandTotal=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
-  tbody.innerHTML=rows+`<tr class="budget-total-row">
-    <td style="padding-left:10px;color:var(--muted);font-size:13px" colspan="3">Grand total</td>
-    <td class="budget-total-amt" style="padding-right:8px" id="budget-grand-total">${grandTotal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
-    <td></td>
-  </tr>`;
-  renderBudgetSummary(grandTotal);
-}
-
-function exportBudgetCSV(){
-  if(!state.budgetRows.length){toast('No budget rows to export');return;}
-  const rows=[['Aspect','Quantity','Unit Expense (BDT)','Total Expense (BDT)']];
-  state.budgetRows.forEach(r=>{
-    rows.push(['"'+r.aspect.replace(/"/g,'""')+'"',r.qty,r.unitExp.toFixed(2),(r.qty*r.unitExp).toFixed(2)]);
-  });
-  const grand=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
-  rows.push(['Grand Total','','',grand.toFixed(2)]);
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='budget-'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Budget exported!');
-}
-
-
-function exportCSV(){
-  const allDays=Object.keys(state.entries).sort();
-  if(!allDays.length){toast('No data to export');return;}
-  const rows=[['Date','Time','Description','Type','Amount (BDT)']];
-  allDays.forEach(day=>{
-    (state.entries[day]||[]).forEach(e=>{
-      rows.push([day, e.time||'', '"'+e.desc.replace(/"/g,'""')+'"', e.type==='exp'?'Expense':'Income', e.amt.toFixed(2)]);
-    });
-  });
-  // Fund log
-  rows.push([]);
-  rows.push(['--- Fund Log ---']);
-  rows.push(['Timestamp','Action','Balance After']);
-  (state.fundLog||[]).forEach(l=>{
-    rows.push(['"'+l.time+'"','"'+l.msg+'"',Number(l.result).toFixed(2)]);
-  });
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='mymoney-'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('CSV downloaded!');
-}
-
-// Enter key shortcuts
+// ─── BOOT ─────────────────────────────────────────────────
 document.getElementById('desc-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('amt-input').focus()});
 document.getElementById('amt-input').addEventListener('keydown',e=>{if(e.key==='Enter')addEntry()});
+document.getElementById('auth-username').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-password').focus()});
+document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')authSubmit()});
 
-load();render();
+// Try auto-login from saved session
+(async()=>{
+  const saved = loadSession();
+  if(saved){
+    session = saved;
+    loadLocal();
+    showApp();
+    if(isOnline) await pullData();
+  }
+})();
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').catch(()=>{});

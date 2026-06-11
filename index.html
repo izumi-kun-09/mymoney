@@ -340,16 +340,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
       </div>
     </div>
 
-    <!-- NEW GROUP SHEET -->
-    <div class="sheet" id="new-group-sheet" style="z-index:35">
-      <div class="sheet-handle"></div>
-      <div class="sheet-title">New budget group</div>
-      <div class="field">
-        <label>Group name</label>
-        <input type="text" id="new-group-name" placeholder="e.g. June 2026, Trip to Cox's Bazar" autocomplete="off"/>
-      </div>
-      <button class="submit-btn" onclick="createGroup()">Create</button>
-    </div>
+
 
     <!-- HISTORY -->
     <div id="tab-history" style="display:none">
@@ -389,6 +380,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 
 <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="overlay" id="overlay2" onclick="closeNewGroupSheet()" style="z-index:38"></div>
 <div class="sheet" id="sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title">New entry</div>
@@ -399,6 +391,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="field"><label>Description</label><input type="text" id="desc-input" placeholder="e.g. Lunch, Rickshaw..." autocomplete="off"/></div>
   <div class="field"><label>Amount (৳)</label><input type="number" id="amt-input" placeholder="0" inputmode="decimal"/></div>
   <button class="submit-btn" onclick="addEntry()">Save entry</button>
+</div>
+
+<!-- NEW GROUP SHEET -->
+<div class="sheet" id="new-group-sheet" style="z-index:40">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">New budget group</div>
+  <div class="field">
+    <label>Group name</label>
+    <input type="text" id="new-group-name" placeholder="e.g. June 2026, Cox's Bazar Trip" autocomplete="off"/>
+  </div>
+  <button class="submit-btn" onclick="createGroup()">Create</button>
 </div>
 
 <!-- EDIT ENTRY SHEET -->
@@ -656,7 +659,6 @@ function closeSheet(){
   document.getElementById('overlay').classList.remove('open');
   document.getElementById('sheet').classList.remove('open');
   document.getElementById('edit-sheet').classList.remove('open');
-  document.getElementById('new-group-sheet').classList.remove('open');
   editingId=null;
 }
 
@@ -756,12 +758,12 @@ function setActiveRows(arr){
 }
 
 function openNewGroupSheet(){
-  document.getElementById('overlay').classList.add('open');
+  document.getElementById('overlay2').classList.add('open');
   document.getElementById('new-group-sheet').classList.add('open');
   setTimeout(()=>document.getElementById('new-group-name').focus(),300);
 }
 function closeNewGroupSheet(){
-  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('overlay2').classList.remove('open');
   document.getElementById('new-group-sheet').classList.remove('open');
 }
 function createGroup(){
@@ -1061,7 +1063,6 @@ function openEditEntry(id){
 function closeEditSheet(){
   document.getElementById('overlay').classList.remove('open');
   document.getElementById('edit-sheet').classList.remove('open');
-  document.getElementById('new-group-sheet').classList.remove('open');
   editingId=null;
 }
 
@@ -1109,6 +1110,7 @@ document.getElementById('desc-input').addEventListener('keydown',e=>{if(e.key===
 document.getElementById('amt-input').addEventListener('keydown',e=>{if(e.key==='Enter')addEntry()});
 document.getElementById('auth-username').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-password').focus()});
 document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')authSubmit()});
+document.getElementById('new-group-name').addEventListener('keydown',e=>{if(e.key==='Enter')createGroup();});
 
 // Try auto-login from saved session
 (async()=>{

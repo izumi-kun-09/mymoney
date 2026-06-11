@@ -151,10 +151,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:20;opacity:0;pointer-events:none;transition:opacity 0.25s;backdrop-filter:blur(4px)}
 .overlay.open{opacity:1;pointer-events:all}
 .sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:24px 24px 0 0;padding:0 20px;padding-bottom:calc(28px + var(--safe-bottom));z-index:30;transform:translateY(110%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)}
-.sheet2{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:24px 24px 0 0;padding:0 20px;padding-bottom:calc(28px + var(--safe-bottom));z-index:60;transform:translateY(110%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)}
-.sheet2.open{transform:translateY(0)}
-.overlay3{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:55;opacity:0;pointer-events:none;transition:opacity 0.25s;backdrop-filter:blur(4px)}
-.overlay3.open{opacity:1;pointer-events:all}
 .sheet.open{transform:translateY(0)}
 .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 20px}
 .sheet-title{font-size:18px;font-weight:600;margin-bottom:20px;text-align:center}
@@ -303,48 +299,32 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
     <!-- BUDGET -->
     <div id="tab-budget" style="display:none">
-      <!-- Group selector bar -->
-      <div style="margin:12px 4px 0;display:flex;align-items:center;gap:8px">
-        <div id="budget-group-tabs" style="display:flex;gap:6px;flex:1;overflow-x:auto;padding-bottom:2px"></div>
-        <button onclick="openNewGroupSheet()" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
-      </div>
-      <!-- No group placeholder -->
-      <div id="budget-no-group" style="display:none;text-align:center;padding:48px 20px;color:var(--muted)">
-        <div style="font-size:36px;margin-bottom:10px">📅</div>
-        <p style="font-size:15px">No budgets yet.<br/>Tap + to create your first one<br/>(e.g. "June 2026")</p>
-      </div>
-      <!-- Active group content -->
-      <div id="budget-group-content" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 4px 8px">
-          <div class="section-hd" style="margin:0" id="budget-group-title">Budget</div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button onclick="resetTab('budget')" style="font-size:12px;color:var(--red);background:none;border:1px solid var(--red-dim);border-radius:20px;padding:5px 12px;cursor:pointer;">Reset</button>
-            <button onclick="deleteGroup()" style="font-size:12px;color:var(--red);background:none;border:1px solid var(--red-dim);border-radius:20px;padding:5px 12px;cursor:pointer;">Delete</button>
-            <button onclick="exportBudgetCSV()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export
-            </button>
-          </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
+        <div class="section-hd" style="margin:0">Budget planner</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="resetTab('budget')" style="font-size:12px;color:var(--red);background:none;border:1px solid var(--red-dim);border-radius:20px;padding:5px 12px;cursor:pointer;">Reset</button>
+          <button onclick="exportBudgetCSV()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
         </div>
-        <div class="budget-summary-cards" id="budget-summary-cards"></div>
-        <div class="budget-wrap">
-          <table class="budget-table">
-            <colgroup><col style="width:36%"/><col style="width:14%"/><col style="width:22%"/><col style="width:22%"/><col style="width:6%"/></colgroup>
-            <thead><tr>
-              <th style="text-align:left;padding-left:14px">Aspect</th>
-              <th style="text-align:right">#</th>
-              <th style="text-align:right">Unit ৳</th>
-              <th style="text-align:right">Total ৳</th>
-              <th></th>
-            </tr></thead>
-            <tbody id="budget-tbody"></tbody>
-          </table>
-          <button class="add-row-btn" onclick="addBudgetRow()">+ Add row</button>
-        </div>
+      </div>
+      <div class="budget-summary-cards" id="budget-summary-cards"></div>
+      <div class="budget-wrap">
+        <table class="budget-table">
+          <colgroup><col style="width:36%"/><col style="width:14%"/><col style="width:22%"/><col style="width:22%"/><col style="width:6%"/></colgroup>
+          <thead><tr>
+            <th style="text-align:left;padding-left:14px">Aspect</th>
+            <th style="text-align:right">#</th>
+            <th style="text-align:right">Unit ৳</th>
+            <th style="text-align:right">Total ৳</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="budget-tbody"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addBudgetRow()">+ Add row</button>
       </div>
     </div>
-
-
 
     <!-- HISTORY -->
     <div id="tab-history" style="display:none">
@@ -384,7 +364,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 
 <div class="overlay" id="overlay" onclick="closeSheet()"></div>
-<div class="overlay3" id="overlay3" onclick="closeNewGroupSheet()"></div>
 <div class="sheet" id="sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title">New entry</div>
@@ -397,19 +376,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <button class="submit-btn" onclick="addEntry()">Save entry</button>
 </div>
 
-<!-- NEW GROUP SHEET -->
-<div class="sheet2" id="new-group-sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-title">New budget group</div>
-  <div class="field">
-    <label>Group name</label>
-    <input type="text" id="new-group-name" placeholder="e.g. June 2026, Cox's Bazar Trip" autocomplete="off"/>
-  </div>
-  <button class="submit-btn" onclick="createGroup()">Create</button>
-</div>
-
 <!-- EDIT ENTRY SHEET -->
-<div class="sheet" id="edit-sheet" style="z-index:50">
+<div class="sheet" id="edit-sheet" style="z-index:35">
   <div class="sheet-handle"></div>
   <div class="sheet-title">Edit entry</div>
   <div class="type-row">
@@ -432,7 +400,7 @@ const LS_KEY = 'mymoney_v3';
 const LS_SESSION = 'mymoney_session';
 
 // ─── STATE ────────────────────────────────────────────────
-let state = {fund:0, entries:{}, fundLog:[], budgetRows:[], budgetGroups:{}, activeBudgetGroup:''};
+let state = {fund:0, entries:{}, fundLog:[], budgetRows:[]};
 let session = null; // {access_token, refresh_token, user_id, username}
 let isOnline = navigator.onLine;
 let pendingSync = false;
@@ -729,7 +697,7 @@ function resetTab(tab){
   } else if(tab==='fund'){
     state.fundLog=[];
   } else if(tab==='budget'){
-    if(state.activeBudgetGroup) state.budgetGroups[state.activeBudgetGroup]=[];
+    state.budgetRows=[];
   }
   save(); render();
   if(tab==='budget') renderBudget();
@@ -749,180 +717,60 @@ function switchTab(name,el){
   render();
 }
 
-// ─── BUDGET GROUPS ────────────────────────────────────────
-function activeRows(){
-  const g=state.activeBudgetGroup;
-  if(!g) return [];
-  if(!state.budgetGroups[g]) state.budgetGroups[g]=[];
-  return state.budgetGroups[g];
-}
-function setActiveRows(arr){
-  if(!state.activeBudgetGroup) return;
-  state.budgetGroups[state.activeBudgetGroup]=arr;
-}
-
-function openNewGroupSheet(){
-  document.getElementById('overlay3').classList.add('open');
-  document.getElementById('new-group-sheet').classList.add('open');
-  setTimeout(()=>document.getElementById('new-group-name').focus(),300);
-}
-function closeNewGroupSheet(){
-  document.getElementById('overlay3').classList.remove('open');
-  document.getElementById('new-group-sheet').classList.remove('open');
-}
-function createGroup(){
-  const name=document.getElementById('new-group-name').value.trim();
-  if(!name){toast('Enter a group name');return;}
-  if(state.budgetGroups[name]!==undefined){toast('Group already exists');return;}
-  state.budgetGroups[name]=[];
-  state.activeBudgetGroup=name;
-  save();
-  document.getElementById('new-group-name').value='';
-  closeNewGroupSheet();
-  renderBudget();
-}
-function switchGroup(name){
-  state.activeBudgetGroup=name;
-  save(); renderBudget();
-}
-function deleteGroup(){
-  const g=state.activeBudgetGroup;
-  if(!g) return;
-  if(!confirm('Delete group "'+g+'"? This cannot be undone.')) return;
-  delete state.budgetGroups[g];
-  const keys=Object.keys(state.budgetGroups);
-  state.activeBudgetGroup=keys.length?keys[keys.length-1]:'';
-  save(); renderBudget();
-}
-
 // ─── BUDGET ───────────────────────────────────────────────
 function addBudgetRow(){
-  if(!state.activeBudgetGroup){toast('Create a group first');return;}
-  const rows=activeRows();
-  rows.push({id:Date.now()+Math.random(),aspect:'',qty:1,unitExp:0});
-  setActiveRows(rows);
+  state.budgetRows.push({id:Date.now()+Math.random(),aspect:'',qty:1,unitExp:0});
   save(); renderBudget();
-  // focus the new row's aspect input after render
-  setTimeout(()=>{
-    const inputs=document.querySelectorAll('#budget-tbody .budget-name-input');
-    if(inputs.length) inputs[inputs.length-1].focus();
-  },50);
 }
-
 function updateBudgetRow(id,field,val){
-  const rows=activeRows();
-  const row=rows.find(r=>r.id===id);
-  if(!row) return;
+  const row=state.budgetRows.find(r=>r.id===id);
+  if(!row)return;
   if(field==='qty') row.qty=parseFloat(val)||0;
   else if(field==='unitExp') row.unitExp=parseFloat(val)||0;
   else if(field==='aspect') row.aspect=val;
-  setActiveRows(rows);
-  save(); refreshBudgetTotals();
+  save(); renderBudgetTotal();
 }
-
 function deleteBudgetRow(id){
-  setActiveRows(activeRows().filter(r=>r.id!==id));
+  state.budgetRows=state.budgetRows.filter(r=>r.id!==id);
   save(); renderBudget();
 }
-
-function refreshBudgetTotals(){
-  // Update each row's total cell live without re-rendering inputs (preserves focus)
-  const rows=activeRows();
-  rows.forEach(r=>{
-    const cell=document.getElementById('btotal-'+r.id);
-    if(cell) cell.textContent=((r.qty||0)*(r.unitExp||0)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  });
-  const grand=rows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
-  const gel=document.getElementById('budget-grand-total');
-  if(gel) gel.textContent=grand.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  renderBudgetSummary(grand, rows.length);
+function renderBudgetTotal(){
+  const total=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  const el=document.getElementById('budget-grand-total');
+  if(el) el.textContent=total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  renderBudgetSummary(total);
 }
-
-function renderBudgetSummary(total, count){
+function renderBudgetSummary(total){
   const cards=document.getElementById('budget-summary-cards');
-  if(!cards) return;
+  if(!cards)return;
   cards.innerHTML=`
     <div class="stat"><div class="stat-label">Total budget</div><div class="stat-value" style="color:var(--amber)">৳${Number(total).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>
-    <div class="stat"><div class="stat-label">Line items</div><div class="stat-value">${count}</div></div>`;
+    <div class="stat"><div class="stat-label">Line items</div><div class="stat-value">${state.budgetRows.length}</div></div>`;
 }
-
-function budgetEnterKey(e, id, field){
-  if(e.key!=='Enter') return;
-  e.preventDefault();
-  const rows=activeRows();
-  const idx=rows.findIndex(r=>r.id===id);
-  // field order: aspect → qty → unitExp → aspect of next row
-  const fields=['aspect','qty','unitExp'];
-  const fi=fields.indexOf(field);
-  if(fi<2){
-    // move to next field in same row
-    const nextField=fields[fi+1];
-    const sel=nextField==='aspect'?'.budget-name-input':'.budget-num-input';
-    const tr=document.querySelectorAll('#budget-tbody tr')[idx];
-    if(tr){
-      const inputs=tr.querySelectorAll('input');
-      const map={aspect:0,qty:1,unitExp:2};
-      const next=inputs[map[nextField]];
-      if(next){next.focus();next.select();}
-    }
-  } else {
-    // last field — move to aspect of next row, or add new row
-    const nextTr=document.querySelectorAll('#budget-tbody tr')[idx+1];
-    if(nextTr){
-      const inp=nextTr.querySelector('.budget-name-input');
-      if(inp){inp.focus();inp.select();}
-    } else {
-      addBudgetRow();
-    }
-  }
-}
-
 function renderBudget(){
-  // Group tabs
-  const tabsEl=document.getElementById('budget-group-tabs');
-  const groups=Object.keys(state.budgetGroups);
-  tabsEl.innerHTML=groups.map(g=>`
-    <button onclick="switchGroup('${g.replace(/'/g,"\\'")}')" style="white-space:nowrap;padding:6px 14px;border-radius:20px;border:1px solid ${g===state.activeBudgetGroup?'var(--green)':'var(--border)'};background:${g===state.activeBudgetGroup?'var(--green-dim)':'var(--surface2)'};color:${g===state.activeBudgetGroup?'var(--green)':'var(--muted)'};font-size:13px;cursor:pointer;">${g}</button>
-  `).join('');
-
-  const noGroup=document.getElementById('budget-no-group');
-  const content=document.getElementById('budget-group-content');
-  if(!groups.length||!state.activeBudgetGroup){
-    noGroup.style.display='block'; content.style.display='none'; return;
-  }
-  noGroup.style.display='none'; content.style.display='block';
-  document.getElementById('budget-group-title').textContent=state.activeBudgetGroup;
-
   const tbody=document.getElementById('budget-tbody');
-  if(!tbody) return;
-  const rows=activeRows();
-  if(!rows.length){
+  if(!tbody)return;
+  if(!state.budgetRows.length){
     tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted);font-size:14px">No rows yet — tap "+ Add row"</td></tr>`;
-    renderBudgetSummary(0,0); return;
+    renderBudgetSummary(0); return;
   }
-  tbody.innerHTML=rows.map(r=>{
+  const rows=state.budgetRows.map(r=>{
     const total=(r.qty||0)*(r.unitExp||0);
     return `<tr>
-      <td style="padding:5px 4px 5px 10px"><input class="budget-name-input" data-id="${r.id}" value="${r.aspect.replace(/"/g,'&quot;')}" placeholder="Aspect"
-        oninput="updateBudgetRow(${r.id},'aspect',this.value)"
-        onkeydown="budgetEnterKey(event,${r.id},'aspect')"/></td>
-      <td style="padding:5px 4px"><input class="budget-num-input" data-id="${r.id}" type="number" value="${r.qty}" min="0" step="any"
-        oninput="updateBudgetRow(${r.id},'qty',this.value)"
-        onkeydown="budgetEnterKey(event,${r.id},'qty')"/></td>
-      <td style="padding:5px 4px"><input class="budget-num-input" data-id="${r.id}" type="number" value="${r.unitExp}" min="0" step="any"
-        oninput="updateBudgetRow(${r.id},'unitExp',this.value)"
-        onkeydown="budgetEnterKey(event,${r.id},'unitExp')"/></td>
-      <td id="btotal-${r.id}" style="padding:5px 8px 5px 4px;text-align:right;font-size:14px;font-weight:600;color:var(--amber)">${total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
+      <td style="padding:5px 4px 5px 10px"><input class="budget-name-input" value="${r.aspect.replace(/"/g,'&quot;')}" placeholder="Aspect" oninput="updateBudgetRow(${r.id},'aspect',this.value)"/></td>
+      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.qty}" min="0" step="any" oninput="updateBudgetRow(${r.id},'qty',this.value)"/></td>
+      <td style="padding:5px 4px"><input class="budget-num-input" type="number" value="${r.unitExp}" min="0" step="any" oninput="updateBudgetRow(${r.id},'unitExp',this.value)"/></td>
+      <td style="padding:5px 8px 5px 4px;text-align:right;font-size:14px;font-weight:600;color:var(--amber)">${total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
       <td style="padding:5px 6px"><button class="del-row-btn" onclick="deleteBudgetRow(${r.id})">✕</button></td>
     </tr>`;
   }).join('');
-  const grand=rows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
-  tbody.innerHTML+=`<tr class="budget-total-row">
+  const grand=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  tbody.innerHTML=rows+`<tr class="budget-total-row">
     <td style="padding-left:10px;color:var(--muted);font-size:13px" colspan="3">Grand total</td>
     <td class="budget-total-amt" style="padding-right:8px" id="budget-grand-total">${grand.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</td>
     <td></td>
   </tr>`;
-  renderBudgetSummary(grand, rows.length);
+  renderBudgetSummary(grand);
 }
 
 // ─── EXPORTS ──────────────────────────────────────────────
@@ -943,15 +791,14 @@ function exportCSV(){
   toast('CSV downloaded!');
 }
 function exportBudgetCSV(){
-  const activeR=activeRows();
-  if(!activeR.length){toast('No budget rows to export');return;}
+  if(!state.budgetRows.length){toast('No budget rows to export');return;}
   const rows=[['Aspect','Quantity','Unit Expense (BDT)','Total Expense (BDT)']];
-  activeR.forEach(r=>{
+  state.budgetRows.forEach(r=>{
     rows.push(['"'+r.aspect.replace(/"/g,'""')+'"',r.qty,r.unitExp.toFixed(2),(r.qty*r.unitExp).toFixed(2)]);
   });
-  const grand=activeR.reduce((s,r)=>s+(r.qty*r.unitExp),0);
+  const grand=state.budgetRows.reduce((s,r)=>s+(r.qty*r.unitExp),0);
   rows.push(['Grand Total','','',grand.toFixed(2)]);
-  dl(rows.map(r=>r.join(',')).join('\n'),'budget-'+state.activeBudgetGroup.replace(/[^a-z0-9]/gi,'-')+'-'+new Date().toISOString().slice(0,10)+'.csv');
+  dl(rows.map(r=>r.join(',')).join('\n'),'budget-'+new Date().toISOString().slice(0,10)+'.csv');
   toast('Budget exported!');
 }
 function dl(csv,name){
@@ -1114,7 +961,6 @@ document.getElementById('desc-input').addEventListener('keydown',e=>{if(e.key===
 document.getElementById('amt-input').addEventListener('keydown',e=>{if(e.key==='Enter')addEntry()});
 document.getElementById('auth-username').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-password').focus()});
 document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')authSubmit()});
-document.getElementById('new-group-name').addEventListener('keydown',e=>{if(e.key==='Enter')createGroup();});
 
 // Try auto-login from saved session
 (async()=>{

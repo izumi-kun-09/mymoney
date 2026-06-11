@@ -205,6 +205,41 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 /* OFFLINE BANNER */
 .offline-banner{background:var(--amber-dim);border-bottom:1px solid var(--amber);color:var(--amber);font-size:12px;text-align:center;padding:6px;display:none}
 .offline-banner.show{display:block}
+
+/* PROFILE SCREEN */
+.profile-screen{position:fixed;inset:0;background:var(--bg);z-index:70;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1);padding-top:var(--safe-top)}
+.profile-screen.open{transform:translateX(0)}
+.profile-topbar{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border)}
+.profile-back{background:none;border:none;color:var(--text);cursor:pointer;padding:4px;display:flex;align-items:center}
+.profile-back svg{width:22px;height:22px}
+.profile-topbar-title{font-size:18px;font-weight:600}
+.profile-save-btn{margin-left:auto;padding:8px 18px;background:var(--green);color:#0f0f0f;border:none;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer}
+.profile-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 16px;padding-bottom:40px}
+.profile-scroll::-webkit-scrollbar{display:none}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--green-dim);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px}
+.profile-username{text-align:center;font-size:18px;font-weight:600;margin-bottom:4px}
+.profile-username-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:24px}
+.profile-section{margin-bottom:24px}
+.profile-section-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;padding:0 4px}
+.profile-card{background:var(--surface);border-radius:var(--radius);overflow:hidden}
+.profile-row{display:flex;align-items:center;padding:13px 16px;gap:12px;border-bottom:1px solid var(--border)}
+.profile-row:last-child{border-bottom:none}
+.profile-row-label{font-size:13px;color:var(--muted);min-width:90px;flex-shrink:0}
+.profile-row input,.profile-row select{flex:1;background:transparent;border:none;outline:none;font-size:15px;color:var(--text);text-align:right;-webkit-appearance:none}
+.profile-row select option{background:var(--surface2)}
+/* Income sources */
+.income-item{background:var(--surface);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+.income-item-row{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.income-source-input{flex:1;background:transparent;border:none;outline:none;font-size:15px;color:var(--text)}
+.income-amt-input{width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:14px;color:var(--text);text-align:right;outline:none;-webkit-appearance:none}
+.income-amt-input:focus{border-color:var(--green)}
+.income-del-btn{background:none;border:none;color:var(--hint);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0}
+.add-income-btn{display:flex;align-items:center;gap:8px;padding:13px 16px;font-size:14px;color:var(--green);background:var(--surface);border:none;cursor:pointer;width:100%;border-radius:var(--radius);margin-bottom:8px}
+/* Profile topbar avatar button */
+.profile-topbar-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--text);padding:4px}
+.profile-topbar-avatar{width:28px;height:28px;border-radius:50%;background:var(--green-dim);border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--green)}
+/* Summary card in profile */
+.profile-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -249,7 +284,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
       </button>
       <span class="topbar-date" id="top-date"></span>
-      <button class="logout-btn" onclick="logOut()">out</button>
+      <button class="profile-topbar-btn" onclick="openProfile()" id="profile-topbar-btn">
+        <div class="profile-topbar-avatar" id="topbar-avatar">?</div>
+      </button>
     </div>
   </div>
 
@@ -379,6 +416,95 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </nav>
 </div>
 
+<!-- PROFILE SCREEN -->
+<div class="profile-screen" id="profile-screen">
+  <div class="profile-topbar">
+    <button class="profile-back" onclick="closeProfile()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="profile-topbar-title">Profile</span>
+    <button class="profile-save-btn" onclick="saveProfile()">Save</button>
+  </div>
+  <div class="profile-scroll">
+    <!-- Avatar & username -->
+    <div class="profile-avatar" id="profile-avatar-big">👤</div>
+    <div class="profile-username" id="profile-username-display"></div>
+    <div class="profile-username-sub">Member since <span id="profile-joined">—</span></div>
+
+    <!-- Financial summary -->
+    <div class="profile-section">
+      <div class="profile-section-title">Monthly overview</div>
+      <div class="profile-summary" id="profile-summary-cards"></div>
+    </div>
+
+    <!-- Personal details -->
+    <div class="profile-section">
+      <div class="profile-section-title">Personal</div>
+      <div class="profile-card">
+        <div class="profile-row">
+          <span class="profile-row-label">Full name</span>
+          <input type="text" id="pf-name" placeholder="Your name" autocomplete="name"/>
+        </div>
+        <div class="profile-row">
+          <span class="profile-row-label">Age</span>
+          <input type="number" id="pf-age" placeholder="—" min="1" max="120" inputmode="numeric"/>
+        </div>
+        <div class="profile-row">
+          <span class="profile-row-label">Occupation</span>
+          <input type="text" id="pf-occupation" placeholder="e.g. Student, Engineer"/>
+        </div>
+        <div class="profile-row">
+          <span class="profile-row-label">Currency</span>
+          <select id="pf-currency">
+            <option value="৳">৳ BDT — Bangladeshi Taka</option>
+            <option value="$">$ USD — US Dollar</option>
+            <option value="€">€ EUR — Euro</option>
+            <option value="£">£ GBP — British Pound</option>
+            <option value="₹">₹ INR — Indian Rupee</option>
+            <option value="¥">¥ JPY — Japanese Yen</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Income sources -->
+    <div class="profile-section">
+      <div class="profile-section-title">Income sources</div>
+      <div id="income-sources-list"></div>
+      <button class="add-income-btn" onclick="addIncomeSource()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add income source
+      </button>
+    </div>
+
+    <!-- Financial goals -->
+    <div class="profile-section">
+      <div class="profile-section-title">Financial goals</div>
+      <div class="profile-card">
+        <div class="profile-row">
+          <span class="profile-row-label">Monthly savings goal</span>
+          <input type="number" id="pf-savings-goal" placeholder="0" inputmode="decimal"/>
+        </div>
+        <div class="profile-row">
+          <span class="profile-row-label">Daily budget limit</span>
+          <input type="number" id="pf-daily-limit" placeholder="0" inputmode="decimal"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="profile-section">
+      <div class="profile-section-title">Account</div>
+      <div class="profile-card">
+        <div class="profile-row" style="cursor:pointer" onclick="logOut()">
+          <span style="font-size:15px;color:var(--red)">Log out</span>
+          <svg style="margin-left:auto;color:var(--hint)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="fab-wrap" id="fab-wrap">
   <button class="fab" onclick="openSheet()" aria-label="Add entry">+</button>
 </div>
@@ -432,7 +558,7 @@ const LS_KEY = 'mymoney_v3';
 const LS_SESSION = 'mymoney_session';
 
 // ─── STATE ────────────────────────────────────────────────
-let state = {fund:0, entries:{}, fundLog:[], budgetRows:[], budgetGroups:{}, activeBudgetGroup:''};
+let state = {fund:0, entries:{}, fundLog:[], budgetRows:[], budgetGroups:{}, activeBudgetGroup:'', profile:{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]}};
 let session = null; // {access_token, refresh_token, user_id, username}
 let isOnline = navigator.onLine;
 let pendingSync = false;
@@ -465,6 +591,8 @@ function loadLocal(){
     if(!state.budgetRows)state.budgetRows=[];
     if(!state.budgetGroups)state.budgetGroups={};
     if(state.activeBudgetGroup===undefined)state.activeBudgetGroup='';
+    if(!state.profile)state.profile={name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+    if(!state.profile.incomeSources)state.profile.incomeSources=[];
   }catch(e){}
 }
 function saveSession(s){try{localStorage.setItem(LS_SESSION,JSON.stringify(s));}catch(e){}}
@@ -549,6 +677,8 @@ async function pullData(){
       if(!remote.budgetRows) remote.budgetRows=[];
       if(!remote.budgetGroups) remote.budgetGroups={};
       if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
+      if(!remote.profile)remote.profile={name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+      if(!remote.profile.incomeSources)remote.profile.incomeSources=[];
       state = remote;
       saveLocal();
       render();
@@ -630,6 +760,7 @@ function showApp(){
     document.getElementById('sync-dot').className='sync-dot offline';
     document.getElementById('offline-banner').classList.add('show');
   }
+  updateTopbarAvatar();
   render();
 }
 
@@ -637,7 +768,7 @@ async function logOut(){
   await signOut();
   clearSession();
   session=null;
-  state={fund:0,entries:{},fundLog:[],budgetRows:[],budgetGroups:{},activeBudgetGroup:''};
+  state={fund:0,entries:{},fundLog:[],budgetRows:[],budgetGroups:{},activeBudgetGroup:'',profile:{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]}};
   document.getElementById('app').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('auth-username').value='';
@@ -1111,6 +1242,110 @@ function saveFundEdit(i){
   save();
   toast('Note updated');
   render();
+}
+
+// ─── PROFILE ──────────────────────────────────────────────
+function openProfile(){
+  const p=state.profile;
+  document.getElementById('pf-name').value=p.name||'';
+  document.getElementById('pf-age').value=p.age||'';
+  document.getElementById('pf-occupation').value=p.occupation||'';
+  document.getElementById('pf-currency').value=p.currency||'৳';
+  document.getElementById('pf-savings-goal').value=p.savingsGoal||'';
+  document.getElementById('pf-daily-limit').value=p.dailyLimit||'';
+  document.getElementById('profile-username-display').textContent=session?.username||'';
+  document.getElementById('profile-joined').textContent=session?.joinedDate||'—';
+  renderIncomeSources();
+  renderProfileSummary();
+  document.getElementById('profile-screen').classList.add('open');
+}
+
+function closeProfile(){
+  document.getElementById('profile-screen').classList.remove('open');
+}
+
+function saveProfile(){
+  state.profile.name=document.getElementById('pf-name').value.trim();
+  state.profile.age=document.getElementById('pf-age').value;
+  state.profile.occupation=document.getElementById('pf-occupation').value.trim();
+  state.profile.currency=document.getElementById('pf-currency').value;
+  state.profile.savingsGoal=parseFloat(document.getElementById('pf-savings-goal').value)||0;
+  state.profile.dailyLimit=parseFloat(document.getElementById('pf-daily-limit').value)||0;
+  save();
+  updateTopbarAvatar();
+  toast('Profile saved ✓');
+}
+
+function updateTopbarAvatar(){
+  const name=state.profile?.name||session?.username||'?';
+  const letter=name.charAt(0).toUpperCase();
+  const el=document.getElementById('topbar-avatar');
+  if(el) el.textContent=letter;
+  const big=document.getElementById('profile-avatar-big');
+  if(big) big.textContent=letter;
+}
+
+function addIncomeSource(source='',amount=0){
+  state.profile.incomeSources.push({id:Date.now()+Math.random(),source,amount});
+  renderIncomeSources();
+}
+
+function updateIncomeSource(id,field,val){
+  const item=state.profile.incomeSources.find(x=>x.id===id);
+  if(!item)return;
+  if(field==='source')item.source=val;
+  else if(field==='amount')item.amount=parseFloat(val)||0;
+  renderProfileSummary();
+}
+
+function deleteIncomeSource(id){
+  state.profile.incomeSources=state.profile.incomeSources.filter(x=>x.id!==id);
+  renderIncomeSources();
+  renderProfileSummary();
+}
+
+function renderIncomeSources(){
+  const list=document.getElementById('income-sources-list');
+  if(!list)return;
+  const sources=state.profile.incomeSources||[];
+  if(!sources.length){
+    list.innerHTML=`<div style="text-align:center;padding:16px;color:var(--muted);font-size:14px;background:var(--surface);border-radius:var(--radius);margin-bottom:8px">No income sources yet</div>`;
+    return;
+  }
+  list.innerHTML=sources.map(s=>`
+    <div class="income-item">
+      <div class="income-item-row">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+        <input class="income-source-input" type="text" value="${s.source.replace(/"/g,'&quot;')}" placeholder="Source name (e.g. Salary)"
+          oninput="updateIncomeSource(${s.id},'source',this.value)"/>
+        <input class="income-amt-input" type="number" value="${s.amount||''}" placeholder="Amount" inputmode="decimal"
+          oninput="updateIncomeSource(${s.id},'amount',this.value)"/>
+        <button class="income-del-btn" onclick="deleteIncomeSource(${s.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderProfileSummary(){
+  const cards=document.getElementById('profile-summary-cards');
+  if(!cards)return;
+  const totalIncome=(state.profile.incomeSources||[]).reduce((s,x)=>s+x.amount,0);
+  const cur=state.profile.currency||'৳';
+  // calc this month's spend
+  const now=new Date();
+  const monthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  let monthSpend=0;
+  Object.keys(state.entries).forEach(day=>{
+    if(day.startsWith(monthKey)){
+      (state.entries[day]||[]).forEach(e=>{ if(e.type==='exp')monthSpend+=e.amt; });
+    }
+  });
+  const savingsGoal=state.profile.savingsGoal||0;
+  const projected=totalIncome-monthSpend;
+  cards.innerHTML=`
+    <div class="stat"><div class="stat-label">Monthly income</div><div class="stat-value" style="color:var(--green);font-size:18px">${cur}${totalIncome.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>
+    <div class="stat"><div class="stat-label">Month spent</div><div class="stat-value" style="color:var(--red);font-size:18px">${cur}${monthSpend.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>
+    <div class="stat"><div class="stat-label">Projected left</div><div class="stat-value" style="font-size:18px;color:${projected>=0?'var(--green)':'var(--red)'}">${cur}${Math.abs(projected).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>
+    <div class="stat"><div class="stat-label">Savings goal</div><div class="stat-value" style="color:var(--amber);font-size:18px">${cur}${savingsGoal.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div></div>`;
 }
 
 // ─── BOOT ─────────────────────────────────────────────────

@@ -262,7 +262,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="scroll-area" id="scroll-area">
     <!-- TODAY -->
     <div id="tab-today">
-      <div class="section-hd">Today's entries</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
+        <div class="section-hd" style="margin:0">Today's entries</div>
+        <button onclick="resetTab('today')" style="font-size:12px;color:var(--red);background:none;border:1px solid var(--red-dim);border-radius:20px;padding:5px 12px;cursor:pointer;">Reset today</button>
+      </div>
       <div id="entry-list"></div>
     </div>
 
@@ -270,23 +273,30 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     <div id="tab-fund" style="display:none">
       <div class="section-hd">Adjust fund</div>
       <div class="field"><label>Amount (৳)</label><input type="number" id="fund-input" placeholder="0" inputmode="decimal"/></div>
+      <div class="field"><label>Source <span style="color:var(--hint);font-size:11px;text-transform:none;letter-spacing:0">(optional — e.g. Bkash, Salary, Dad)</span></label><input type="text" id="fund-source" placeholder="e.g. Bkash" autocomplete="off"/></div>
       <div class="fund-btns">
         <button class="fund-act-btn set" onclick="adjustFund('set')">Set</button>
         <button class="fund-act-btn add" onclick="adjustFund('add')">+ Add</button>
         <button class="fund-act-btn sub" onclick="adjustFund('sub')">− Deduct</button>
       </div>
-      <div class="section-hd" style="margin-top:24px">Fund log</div>
-      <div id="fund-log"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:24px">
+        <div class="section-hd" style="margin:0">Fund log</div>
+        <button onclick="resetTab('fund')" style="font-size:12px;color:var(--red);background:none;border:1px solid var(--red-dim);border-radius:20px;padding:5px 12px;cursor:pointer;">Reset log</button>
+      </div>
+      <div id="fund-log" style="margin-top:8px"></div>
     </div>
 
     <!-- BUDGET -->
     <div id="tab-budget" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 4px 8px">
         <div class="section-hd" style="margin:0">Budget planner</div>
-        <button onclick="exportBudgetCSV()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export
-        </button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="resetTab('budget')" style="font-size:12px;color:var(--red);background:none;border:1px solid var(--red-dim);border-radius:20px;padding:5px 12px;cursor:pointer;">Reset</button>
+          <button onclick="exportBudgetCSV()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+        </div>
       </div>
       <div class="budget-summary-cards" id="budget-summary-cards"></div>
       <div class="budget-wrap">
@@ -630,15 +640,42 @@ function deleteEntry(id){
 function adjustFund(op){
   const v=parseFloat(document.getElementById('fund-input').value);
   if(isNaN(v)||v<0){toast('Enter a valid amount');return;}
+  const source=(document.getElementById('fund-source').value||'').trim();
+  const srcLabel=source?' ('+source+')':'';
   let msg='';
-  if(op==='set'){state.fund=v;msg='Set to '+FMT(v);}
-  else if(op==='add'){state.fund+=v;msg='Added '+FMT(v);}
+  if(op==='set'){
+    // Subtract today's existing expenses so Set reflects real remaining balance
+    const todaySpent=todayEntries().filter(e=>e.type==='exp').reduce((s,e)=>s+e.amt,0);
+    const todayEarned=todayEntries().filter(e=>e.type==='inc').reduce((s,e)=>s+e.amt,0);
+    state.fund=v - todaySpent + todayEarned;
+    msg='Set'+srcLabel+' to '+FMT(v)+' (net after today: '+FMT(state.fund)+')';
+  }
+  else if(op==='add'){state.fund+=v;msg='Added'+srcLabel+' '+FMT(v);}
   else if(op==='sub'){state.fund-=v;msg='Deducted '+FMT(v);}
   state.fundLog.unshift({msg,time:new Date().toLocaleString('en-BD',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),result:state.fund});
   if(state.fundLog.length>40) state.fundLog=state.fundLog.slice(0,40);
   save();
   document.getElementById('fund-input').value='';
+  document.getElementById('fund-source').value='';
   toast(msg); render();
+}
+
+function resetTab(tab){
+  const labels={today:"today's entries",fund:"fund log",budget:"all budget rows"};
+  if(!confirm('Reset '+labels[tab]+'? This cannot be undone.')) return;
+  if(tab==='today'){
+    // Reverse fund impact of today's entries
+    const entries=todayEntries();
+    entries.forEach(e=>{ if(e.type==='exp') state.fund+=e.amt; else state.fund-=e.amt; });
+    state.entries[todayKey()]=[];
+  } else if(tab==='fund'){
+    state.fundLog=[];
+  } else if(tab==='budget'){
+    state.budgetRows=[];
+  }
+  save(); render();
+  if(tab==='budget') renderBudget();
+  toast('Reset done');
 }
 
 function switchTab(name,el){

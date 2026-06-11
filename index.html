@@ -380,7 +380,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 
 <div class="overlay" id="overlay" onclick="closeSheet()"></div>
-<div class="overlay" id="overlay2" onclick="closeNewGroupSheet()" style="z-index:38"></div>
+<div class="overlay" id="overlay2" onclick="closeNewGroupSheet()" style="z-index:35;pointer-events:none"></div>
 <div class="sheet" id="sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title">New entry</div>
@@ -394,7 +394,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 
 <!-- NEW GROUP SHEET -->
-<div class="sheet" id="new-group-sheet" style="z-index:40">
+<div class="sheet" id="new-group-sheet" style="z-index:50">
   <div class="sheet-handle"></div>
   <div class="sheet-title">New budget group</div>
   <div class="field">
@@ -405,7 +405,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 
 <!-- EDIT ENTRY SHEET -->
-<div class="sheet" id="edit-sheet" style="z-index:35">
+<div class="sheet" id="edit-sheet" style="z-index:50">
   <div class="sheet-handle"></div>
   <div class="sheet-title">Edit entry</div>
   <div class="type-row">
@@ -659,6 +659,7 @@ function closeSheet(){
   document.getElementById('overlay').classList.remove('open');
   document.getElementById('sheet').classList.remove('open');
   document.getElementById('edit-sheet').classList.remove('open');
+  document.getElementById('new-group-sheet').classList.remove('open');
   editingId=null;
 }
 
@@ -758,12 +759,12 @@ function setActiveRows(arr){
 }
 
 function openNewGroupSheet(){
-  document.getElementById('overlay2').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
   document.getElementById('new-group-sheet').classList.add('open');
   setTimeout(()=>document.getElementById('new-group-name').focus(),300);
 }
 function closeNewGroupSheet(){
-  document.getElementById('overlay2').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
   document.getElementById('new-group-sheet').classList.remove('open');
 }
 function createGroup(){

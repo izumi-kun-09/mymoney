@@ -309,7 +309,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="offline-banner" id="offline-banner">⚡ Offline — changes saved locally and will sync when reconnected</div>
 
   <div class="topbar">
-    <span class="topbar-title" onclick="switchTab('today',document.getElementById('nav-today'))" style="cursor:pointer">My Money</span>
+    <span class="topbar-title" onclick="goHome()" style="cursor:pointer">My Money</span>
     <div class="topbar-right">
       <span class="sync-dot online" id="sync-dot" title="Online"></span>
       <button class="sync-btn" id="sync-btn" onclick="syncNow()" title="Sync now">
@@ -425,41 +425,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         </button>
       </div>
       <div id="history-list"></div>
-    </div>
-  </div>
-
-  <!-- VA TAB -->
-  <div id="tab-va" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding:0 16px 0">
-    <div style="overflow-y:auto;flex-shrink:0">
-      <div class="section-hd" style="margin:16px 4px 8px">Spending insights</div>
-      <div class="va-insights" id="va-insights"></div>
-      <div class="section-hd" style="margin:8px 4px 8px">Your financial consultant</div>
-    </div>
-    <div class="va-chat">
-      <div class="va-chat-header">
-        <div class="va-chat-avatar">🤖</div>
-        <div>
-          <div class="va-chat-name">Fin — Your VA</div>
-          <div class="va-chat-status" id="va-status">Ready to help</div>
-        </div>
-      </div>
-      <div class="va-quick-btns">
-        <button class="va-quick-btn" onclick="vaQuick('Analyse my spending this week')">📊 Weekly analysis</button>
-        <button class="va-quick-btn" onclick="vaQuick('What should I cut back on?')">✂️ Cut back</button>
-        <button class="va-quick-btn" onclick="vaQuick('Am I on track with my savings goal?')">🎯 Savings check</button>
-        <button class="va-quick-btn" onclick="vaQuick('Give me a budget recommendation based on my income')">💡 Budget advice</button>
-      </div>
-      <div class="va-messages" id="va-messages">
-        <div class="va-msg assistant">👋 Hi! I'm Fin, your personal financial consultant. I have full visibility of your income, spending, fund balance, and budget plans. Ask me anything — or tap a quick question above to get started.</div>
-      </div>
-      <div class="va-input-row">
-        <textarea class="va-input" id="va-input" placeholder="Ask Fin anything..." rows="1"
-          oninput="autoResizeVA(this)"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendVAMessage()}"></textarea>
-        <button class="va-send-btn" id="va-send-btn" onclick="sendVAMessage()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
     </div>
   </div>
 
@@ -592,6 +557,68 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="field"><label>Description</label><input type="text" id="desc-input" placeholder="e.g. Lunch, Rickshaw..." autocomplete="off"/></div>
   <div class="field"><label>Amount (৳)</label><input type="number" id="amt-input" placeholder="0" inputmode="decimal"/></div>
   <button class="submit-btn" onclick="addEntry()">Save entry</button>
+</div>
+
+<!-- VA SCREEN -->
+<div id="va-screen" style="position:fixed;inset:0;background:var(--bg);z-index:70;display:none;flex-direction:column;padding-top:var(--safe-top)">
+  <!-- VA topbar -->
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 20px 8px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="width:32px;height:32px;border-radius:50%;background:var(--blue-dim);border:1.5px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:16px">🤖</div>
+    <div>
+      <div style="font-size:16px;font-weight:600">Fin — Your VA</div>
+      <div style="font-size:12px;color:var(--green)" id="va-status">Ready to help</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+      <span id="va-date" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+  </div>
+  <!-- Insight cards -->
+  <div style="flex-shrink:0;padding:10px 16px 0">
+    <div class="va-insights" id="va-insights"></div>
+  </div>
+  <!-- Quick buttons -->
+  <div class="va-quick-btns" style="flex-shrink:0">
+    <button class="va-quick-btn" onclick="vaQuick('Analyse my spending this week')">📊 Weekly analysis</button>
+    <button class="va-quick-btn" onclick="vaQuick('What should I cut back on?')">✂️ Cut back</button>
+    <button class="va-quick-btn" onclick="vaQuick('Am I on track with my savings goal?')">🎯 Savings check</button>
+    <button class="va-quick-btn" onclick="vaQuick('Give me a budget recommendation based on my income')">💡 Budget advice</button>
+  </div>
+  <!-- Messages — fills remaining space -->
+  <div class="va-messages" id="va-messages" style="flex:1;min-height:0;padding:12px 16px;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div class="va-msg assistant">👋 Hi! I'm Fin, your personal financial consultant. I have full visibility of your income, spending, fund balance, and budget plans. Ask me anything — or tap a quick question above to get started.</div>
+  </div>
+  <!-- Input row — always at bottom, above nav -->
+  <div class="va-input-row" style="flex-shrink:0;padding-bottom:calc(10px + var(--safe-bottom))">
+    <textarea class="va-input" id="va-input" placeholder="Ask Fin anything..." rows="1"
+      oninput="autoResizeVA(this)"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendVAMessage()}"></textarea>
+    <button class="va-send-btn" id="va-send-btn" onclick="sendVAMessage()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+  <!-- Bottom nav copy so it stays visible -->
+  <nav class="bottom-nav" style="flex-shrink:0">
+    <button class="nav-btn" onclick="switchTab('today',document.getElementById('nav-today'))">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Today
+    </button>
+    <button class="nav-btn" onclick="switchTab('fund',document.getElementById('nav-fund'))">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      Fund
+    </button>
+    <button class="nav-btn" onclick="switchTab('budget',document.getElementById('nav-budget'))">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Budget
+    </button>
+    <button class="nav-btn" onclick="switchTab('history',document.getElementById('nav-history'))">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
+      History
+    </button>
+    <button class="nav-btn active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Fin
+    </button>
+  </nav>
 </div>
 
 <!-- NEW GROUP SHEET -->
@@ -944,14 +971,15 @@ function resetTab(tab){
 
 function switchTab(name,el){
   currentTab=name;
-  ['today','fund','budget','history','va'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display=t===name?(t==='va'?'flex':'block'):'none';
+  ['today','fund','budget','history'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
   });
+  const vaScreen=document.getElementById('va-screen');
+  vaScreen.style.display=name==='va'?'flex':'none';
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('fab-wrap').style.display=name==='today'?'block':'none';
-  document.getElementById('scroll-area').style.display=name==='va'?'none':'block';
-  if(name==='va'){renderVAInsights();}
+  if(name==='va'){renderVAInsights();document.getElementById('va-date').textContent=new Date().toLocaleDateString('en-BD',{weekday:'short',month:'short',day:'numeric'});}
   document.getElementById('scroll-area').scrollTop=0;
   if(name==='budget') renderBudget();
   render();
@@ -1645,6 +1673,20 @@ function appendVAMessage(role, text, thinking=false){
   container.appendChild(el);
   container.scrollTop = container.scrollHeight;
   return el;
+}
+
+function goHome(){
+  // Close VA screen if open
+  document.getElementById('va-screen').style.display='none';
+  // Switch to today tab
+  ['today','fund','budget','history'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t==='today'?'block':'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-today').classList.add('active');
+  document.getElementById('fab-wrap').style.display='block';
+  document.getElementById('scroll-area').scrollTop=0;
+  currentTab='today';
 }
 
 // ─── BOOT ─────────────────────────────────────────────────

@@ -101,6 +101,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .entry-amt.inc{color:var(--green)}
 .entry-del{padding:6px;color:var(--hint);font-size:18px;background:none;border:none;cursor:pointer;margin-left:4px}
 
+/* EDIT PENCIL */
+.entry-edit{padding:6px;color:var(--hint);font-size:15px;background:none;border:none;cursor:pointer}
+.entry-edit:active{color:var(--green)}
+.fund-edit-btn{padding:4px 8px;font-size:12px;color:var(--blue);background:none;border:1px solid var(--blue-dim);border-radius:12px;cursor:pointer;white-space:nowrap}
+/* inline fund edit */
+.fund-edit-row{display:flex;gap:8px;align-items:center;padding:10px 16px;border-top:1px solid var(--border);background:var(--surface2)}
+.fund-edit-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:14px;color:var(--text);outline:none}
+.fund-edit-row input:focus{border-color:var(--green)}
+.fund-edit-save{padding:8px 14px;background:var(--green);color:#0f0f0f;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer}
+.fund-edit-cancel{padding:8px 10px;background:none;color:var(--muted);border:none;font-size:13px;cursor:pointer}
+
 /* EMPTY */
 .empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
 .empty-state p{font-size:15px;margin-top:8px}
@@ -365,6 +376,19 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <button class="submit-btn" onclick="addEntry()">Save entry</button>
 </div>
 
+<!-- EDIT ENTRY SHEET -->
+<div class="sheet" id="edit-sheet" style="z-index:35">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Edit entry</div>
+  <div class="type-row">
+    <button class="type-btn sel-exp" id="edit-btn-exp" onclick="setEditType('exp')">− Expense</button>
+    <button class="type-btn" id="edit-btn-inc" onclick="setEditType('inc')">+ Income</button>
+  </div>
+  <div class="field"><label>Description</label><input type="text" id="edit-desc" placeholder="Description" autocomplete="off"/></div>
+  <div class="field"><label>Amount (৳)</label><input type="number" id="edit-amt" placeholder="0" inputmode="decimal"/></div>
+  <button class="submit-btn" style="background:var(--blue)" onclick="saveEntryEdit()">Save changes</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -606,6 +630,8 @@ function openSheet(){
 function closeSheet(){
   document.getElementById('overlay').classList.remove('open');
   document.getElementById('sheet').classList.remove('open');
+  document.getElementById('edit-sheet').classList.remove('open');
+  editingId=null;
 }
 
 function addEntry(){
@@ -812,6 +838,7 @@ function render(){
         <div class="entry-icon ${e.type}">${e.type==='exp'?'💸':'💰'}</div>
         <div class="entry-body"><div class="entry-desc">${e.desc}</div><div class="entry-time">${e.time}</div></div>
         <div class="entry-amt ${e.type}">${e.type==='exp'?'−':'+'}${FMT(e.amt)}</div>
+        <button class="entry-edit" onclick="openEditEntry(${e.id})" aria-label="Edit">✎</button>
         <button class="entry-del" onclick="deleteEntry(${e.id})">✕</button>
       </div>`).join('')+`</div>`;
   }
@@ -821,11 +848,17 @@ function render(){
   if(!state.fundLog.length){
     flog.innerHTML=`<div class="empty-state" style="padding:20px"><p>No adjustments yet</p></div>`;
   } else {
-    flog.innerHTML=`<div class="fund-adj">`+state.fundLog.map(l=>`
-      <div class="fund-adj-row">
+    flog.innerHTML=`<div class="fund-adj">`+state.fundLog.map((l,i)=>`
+      <div class="fund-adj-row" id="flog-row-${i}">
         <span class="fund-adj-time">${l.time}</span>
-        <span class="fund-adj-msg">${l.msg}</span>
+        <span class="fund-adj-msg" id="flog-msg-${i}">${l.msg}</span>
         <span class="fund-adj-res">${FMT(l.result)}</span>
+        <button class="fund-edit-btn" onclick="openFundEdit(${i})">Edit</button>
+      </div>
+      <div id="flog-edit-${i}" style="display:none" class="fund-edit-row">
+        <input id="flog-input-${i}" type="text" value="${l.msg.replace(/"/g,'&quot;')}" placeholder="Edit note"/>
+        <button class="fund-edit-save" onclick="saveFundEdit(${i})">Save</button>
+        <button class="fund-edit-cancel" onclick="closeFundEdit(${i})">✕</button>
       </div>`).join('')+`</div>`;
   }
 
@@ -852,6 +885,75 @@ function render(){
       </div>`;
     }).join('');
   }
+}
+
+// ─── EDIT ENTRY ───────────────────────────────────────────
+let editingId = null;
+let editType = 'exp';
+
+function setEditType(t){
+  editType=t;
+  document.getElementById('edit-btn-exp').className='type-btn'+(t==='exp'?' sel-exp':'');
+  document.getElementById('edit-btn-inc').className='type-btn'+(t==='inc'?' sel-inc':'');
+}
+
+function openEditEntry(id){
+  const entries=todayEntries();
+  const e=entries.find(x=>x.id===id);
+  if(!e)return;
+  editingId=id;
+  editType=e.type;
+  document.getElementById('edit-desc').value=e.desc;
+  document.getElementById('edit-amt').value=e.amt;
+  setEditType(e.type);
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('edit-sheet').classList.add('open');
+  setTimeout(()=>document.getElementById('edit-desc').focus(),300);
+}
+
+function closeEditSheet(){
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('edit-sheet').classList.remove('open');
+  editingId=null;
+}
+
+function saveEntryEdit(){
+  const desc=document.getElementById('edit-desc').value.trim();
+  const amt=parseFloat(document.getElementById('edit-amt').value);
+  if(!desc||isNaN(amt)||amt<=0){toast('Fill in description and amount');return;}
+  const entries=todayEntries();
+  const idx=entries.findIndex(e=>e.id===editingId);
+  if(idx===-1)return;
+  const old=entries[idx];
+  // Reverse old effect on fund
+  if(old.type==='exp') state.fund+=old.amt;
+  else state.fund-=old.amt;
+  // Apply new effect
+  if(editType==='exp') state.fund-=amt;
+  else state.fund+=amt;
+  entries[idx]={...old, desc, amt, type:editType};
+  setTodayEntries(entries);
+  save();
+  closeEditSheet();
+  toast('Entry updated');
+  render();
+}
+
+// ─── EDIT FUND LOG (cosmetic only) ────────────────────────
+function openFundEdit(i){
+  document.getElementById('flog-edit-'+i).style.display='flex';
+  document.getElementById('flog-input-'+i).focus();
+}
+function closeFundEdit(i){
+  document.getElementById('flog-edit-'+i).style.display='none';
+}
+function saveFundEdit(i){
+  const val=document.getElementById('flog-input-'+i).value.trim();
+  if(!val)return;
+  state.fundLog[i].msg=val;
+  save();
+  toast('Note updated');
+  render();
 }
 
 // ─── BOOT ─────────────────────────────────────────────────

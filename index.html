@@ -681,7 +681,7 @@ const LS_KEY = 'mymoney_v3';
 const LS_SESSION = 'mymoney_session';
 
 // ─── STATE ────────────────────────────────────────────────
-let state = {fund:0, entries:{}, fundLog:[], budgetRows:[], budgetGroups:{}, activeBudgetGroup:'', profile:{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]}};
+let state = {fund:0, entries:{}, fundLog:[], budgetRows:[], budgetGroups:{}, activeBudgetGroup:'', profile:{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]}, lastModified:0};
 let session = null; // {access_token, refresh_token, user_id, username}
 let isOnline = navigator.onLine;
 let pendingSync = false;
@@ -803,23 +803,37 @@ async function pullData(){
     const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data,updated_at`);
     if(rows && rows.length && rows[0].data){
       const remote = rows[0].data;
-      // Ensure all fields exist
-      if(!remote.entries) remote.entries={};
-      if(!remote.fundLog) remote.fundLog=[];
-      if(!remote.budgetRows) remote.budgetRows=[];
-      if(!remote.budgetGroups) remote.budgetGroups={};
-      if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
-      if(!remote.profile) remote.profile={name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
-      if(!remote.profile.incomeSources) remote.profile.incomeSources=[];
-      state = remote;
-      saveLocal();
-      updateTopbarAvatar();
-      render();
+      const remoteTime = remote.lastModified || 0;
+      const localTime  = state.lastModified  || 0;
+
+      if(remoteTime >= localTime){
+        // Remote is newer or equal — pull it down
+        if(!remote.entries) remote.entries={};
+        if(!remote.fundLog) remote.fundLog=[];
+        if(!remote.budgetRows) remote.budgetRows=[];
+        if(!remote.budgetGroups) remote.budgetGroups={};
+        if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
+        if(!remote.profile) remote.profile={name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+        if(!remote.profile.incomeSources) remote.profile.incomeSources=[];
+        if(remote.lastModified===undefined) remote.lastModified=0;
+        state = remote;
+        saveLocal();
+        updateTopbarAvatar();
+        render();
+        toast('Data synced from cloud ✓');
+      } else {
+        // Local is newer — push local up
+        await pushData();
+        toast('Local data pushed to cloud ✓');
+      }
     } else if(rows && rows.length===0){
       // No remote data yet — push local data up
       await pushData();
     }
-  }catch(e){console.error('Pull failed:',e);}
+  }catch(e){
+    console.error('Pull failed:',e);
+    toast('Sync failed — check connection');
+  }
   finally{setSyncSpinner(false);}
 }
 
@@ -914,6 +928,7 @@ async function logOut(){
 
 // ─── APP LOGIC ────────────────────────────────────────────
 function save(){
+  state.lastModified = Date.now();
   saveLocal();
   if(isOnline) pushData();
   else pendingSync=true;
@@ -1779,7 +1794,9 @@ document.getElementById('new-group-name').addEventListener('keydown',e=>{if(e.ke
     session = saved;
     loadLocal();
     showApp();
-    if(isOnline) await pullData();
+    if(isOnline){
+      await pullData(); // Always pull on boot to get latest from any device
+    }
   }
 })();
 

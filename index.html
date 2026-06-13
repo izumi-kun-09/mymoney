@@ -1461,7 +1461,7 @@ function renderProfileSummary(){
 }
 
 // ─── VA ───────────────────────────────────────────────────
-const VA_MODEL = 'claude-sonnet-4-20250514';
+const VA_MODEL = 'claude-sonnet-4-5';
 let vaMessages = []; // conversation history
 let vaThinking = false;
 
@@ -1653,18 +1653,24 @@ async function sendVAMessage(){
         model: VA_MODEL,
         max_tokens: 1000,
         system: buildFinancialContext(),
-        messages: vaMessages.slice(-10) // last 10 messages for context
+        messages: vaMessages.slice(-10)
       })
     });
     const data = await res.json();
-    const reply = data.content?.map(b=>b.text||'').join('') || 'Sorry, I could not get a response.';
-    thinkingEl.remove();
-    appendVAMessage('assistant', reply);
-    vaMessages.push({role:'assistant', content:reply});
-    document.getElementById('va-status').textContent='Ready to help';
+    if(data.error){
+      thinkingEl.remove();
+      appendVAMessage('assistant','⚠ API error: '+( data.error.message||JSON.stringify(data.error)));
+      document.getElementById('va-status').textContent='Error';
+    } else {
+      const reply = data.content?.map(b=>b.text||'').join('') || 'Sorry, I could not get a response.';
+      thinkingEl.remove();
+      appendVAMessage('assistant', reply);
+      vaMessages.push({role:'assistant', content:reply});
+      document.getElementById('va-status').textContent='Ready to help';
+    }
   }catch(err){
     thinkingEl.remove();
-    appendVAMessage('assistant','⚠ Could not connect. Check your internet connection.');
+    appendVAMessage('assistant','⚠ Could not connect: '+err.message);
     document.getElementById('va-status').textContent='Offline';
   }finally{
     vaThinking=false;

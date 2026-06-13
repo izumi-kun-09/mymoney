@@ -776,6 +776,7 @@ async function signOut(){
 async function pushData(){
   if(!session||!isOnline){pendingSync=true;return;}
   try{
+    console.log('[Sync] Pushing data, lastModified:', state.lastModified);
     // Try PATCH first (update existing row)
     await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}`,{
       method:'PATCH',
@@ -801,21 +802,29 @@ async function pushData(){
 async function pullData(){
   if(!session||!isOnline) return;
   try{
+    console.log('[Sync] Pulling data...');
     const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data`);
+    console.log('[Sync] Pull result:', rows?.length, 'rows', rows?.[0]?.data?.lastModified);
     if(rows && rows.length && rows[0].data){
       const remote = rows[0].data;
-      remote.entries       = remote.entries||{};
-      remote.fundLog       = remote.fundLog||[];
-      remote.budgetRows    = remote.budgetRows||[];
-      remote.budgetGroups  = remote.budgetGroups||{};
-      remote.profile       = remote.profile||{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
-      remote.profile.incomeSources = remote.profile.incomeSources||[];
-      if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
-      if(remote.lastModified===undefined) remote.lastModified=0;
-      state = remote;
-      saveLocal();
-      updateTopbarAvatar();
-      render();
+      const remoteTime = remote.lastModified||0;
+      const localTime  = state.lastModified||0;
+      if(remoteTime > localTime){
+        // Cloud is newer — apply it
+        remote.entries       = remote.entries||{};
+        remote.fundLog       = remote.fundLog||[];
+        remote.budgetRows    = remote.budgetRows||[];
+        remote.budgetGroups  = remote.budgetGroups||{};
+        remote.profile       = remote.profile||{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+        remote.profile.incomeSources = remote.profile.incomeSources||[];
+        if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
+        remote.lastModified  = remoteTime;
+        state = remote;
+        saveLocal();
+        updateTopbarAvatar();
+        render();
+      }
+      // If local is newer or equal, do nothing (local wins until next push)
     } else {
       // No cloud data yet — push local up
       await pushData();
@@ -1809,6 +1818,11 @@ document.getElementById('new-group-name').addEventListener('keydown',e=>{if(e.ke
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').catch(()=>{});
 }
+
+// Auto-sync every 15 seconds when online and logged in
+setInterval(async()=>{
+  if(session && isOnline) await pullData();
+}, 15000);
 </script>
 </body>
 </html>

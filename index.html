@@ -1200,31 +1200,74 @@ function renderBudgetSummary(total, count){
 function budgetEnterKey(e, id, field){
   if(e.key!=='Enter') return;
   e.preventDefault();
+
   const rows=activeRows();
   const idx=rows.findIndex(r=>r.id===id);
-  // field order: aspect → qty → unitExp → aspect of next row
-  const fields=['aspect','qty','unitExp'];
-  const fi=fields.indexOf(field);
-  if(fi<2){
-    // move to next field in same row
-    const nextField=fields[fi+1];
-    const sel=nextField==='aspect'?'.budget-name-input':'.budget-num-input';
-    const tr=document.querySelectorAll('#budget-tbody tr')[idx];
-    if(tr){
-      const inputs=tr.querySelectorAll('input');
-      const map={aspect:0,qty:1,unitExp:2};
-      const next=inputs[map[nextField]];
-      if(next){next.focus();next.select();}
+  const row=rows[idx];
+
+  // Always read live values from the actual input elements too
+  // (in case oninput hasn't fired yet)
+  const trs=document.querySelectorAll('#budget-tbody tr');
+  const tr=trs[idx];
+  if(tr){
+    const inputs=tr.querySelectorAll('input');
+    const liveAspect=inputs[0]?inputs[0].value.trim():'';
+    const liveQty=inputs[1]?parseFloat(inputs[1].value)||0:0;
+    const liveUnit=inputs[2]?parseFloat(inputs[2].value)||0:0;
+    // Sync live values into state
+    row.aspect=liveAspect;
+    row.qty=liveQty;
+    row.unitExp=liveUnit;
+  }
+
+  if(field==='unitExp'){
+    // Validate aspect
+    if(!row.aspect||row.aspect.trim()===''){
+      toast('⚠ Fill in the Aspect name first');
+      if(tr){const inp=tr.querySelector('.budget-name-input');if(inp){inp.focus();inp.select();}}
+      return;
     }
-  } else {
-    // last field — move to aspect of next row, or add new row
-    const nextTr=document.querySelectorAll('#budget-tbody tr')[idx+1];
-    if(nextTr){
+    // Validate qty
+    if(!row.qty||row.qty<=0){
+      toast('⚠ Fill in the number of units first');
+      if(tr){const inputs=tr.querySelectorAll('input');if(inputs[1]){inputs[1].focus();inputs[1].select();}}
+      return;
+    }
+    // Validate unit price
+    if(!row.unitExp||row.unitExp<=0){
+      toast('⚠ Enter a unit price greater than 0');
+      return;
+    }
+    // All valid — calculate total and flash green
+    const total=row.qty*row.unitExp;
+    const totalCell=document.getElementById('btotal-'+id);
+    if(totalCell){
+      totalCell.textContent=total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+      totalCell.style.color='var(--green)';
+      totalCell.style.fontWeight='700';
+      setTimeout(()=>{
+        totalCell.style.color='var(--amber)';
+        totalCell.style.fontWeight='600';
+      },1000);
+    }
+    refreshBudgetTotals();
+    save();
+    // Move to next row aspect or add new row
+    const nextTr=trs[idx+1];
+    if(nextTr&&nextTr.querySelector('.budget-name-input')){
       const inp=nextTr.querySelector('.budget-name-input');
-      if(inp){inp.focus();inp.select();}
+      inp.focus();inp.select();
     } else {
       addBudgetRow();
     }
+    return;
+  }
+
+  // aspect → qty, qty → unitExp navigation
+  if(field==='aspect'){
+    if(tr){const inputs=tr.querySelectorAll('input');if(inputs[1]){inputs[1].focus();inputs[1].select();}}
+  } else if(field==='qty'){
+    if(tr){const inputs=tr.querySelectorAll('input');if(inputs[2]){inputs[2].focus();inputs[2].select();}}
   }
 }
 

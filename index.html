@@ -774,87 +774,85 @@ async function signOut(){
 
 // Data sync
 async function pushData(){
-  if(!session||!isOnline) return;
-  setSyncSpinner(true);
+  if(!session||!isOnline){pendingSync=true;return;}
   try{
-    // First try to update existing row
-    const updateRes = await supaFetch(
-      `/rest/v1/money_data?id=eq.${session.user_id}`,
-      {
-        method:'PATCH',
-        headers:{'Prefer':'return=minimal'},
-        body: JSON.stringify({data: state, updated_at: new Date().toISOString()})
-      }
-    );
-    // If no row existed (404 or empty), insert instead
-    const checkRows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=id`);
-    if(!checkRows || checkRows.length===0){
-      await supaFetch('/rest/v1/money_data', {
+    // Try PATCH first (update existing row)
+    await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}`,{
+      method:'PATCH',
+      headers:{'Prefer':'return=minimal'},
+      body:JSON.stringify({data:state,updated_at:new Date().toISOString()})
+    });
+    // Check if row exists — if PATCH found nothing, INSERT
+    const check = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=id`);
+    if(!check||check.length===0){
+      await supaFetch('/rest/v1/money_data',{
         method:'POST',
         headers:{'Prefer':'return=minimal'},
-        body: JSON.stringify({id: session.user_id, data: state, updated_at: new Date().toISOString()})
+        body:JSON.stringify({id:session.user_id,data:state,updated_at:new Date().toISOString()})
       });
     }
-    pendingSync = false;
+    pendingSync=false;
   }catch(e){
-    pendingSync = true;
+    pendingSync=true;
     console.error('Push failed:',e);
-  }finally{setSyncSpinner(false);}
+  }
 }
 
 async function pullData(){
   if(!session||!isOnline) return;
-  setSyncSpinner(true);
   try{
-    const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data,updated_at`);
+    const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data`);
     if(rows && rows.length && rows[0].data){
       const remote = rows[0].data;
-      const remoteTime = remote.lastModified || 0;
-      const localTime  = state.lastModified  || 0;
-      const remoteHasData = Object.keys(remote.entries||{}).length>0 || (remote.fundLog||[]).length>0 || (remote.fund||0)>0 || Object.keys(remote.budgetGroups||{}).length>0;
-      const localHasData  = Object.keys(state.entries||{}).length>0  || (state.fundLog||[]).length>0  || (state.fund||0)>0;
-
-      if(remoteHasData && remoteTime >= localTime){
-        // Cloud is newer — use it
-        remote.entries = remote.entries||{};
-        remote.fundLog = remote.fundLog||[];
-        remote.budgetRows = remote.budgetRows||[];
-        remote.budgetGroups = remote.budgetGroups||{};
-        if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
-        remote.profile = remote.profile||{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
-        remote.profile.incomeSources = remote.profile.incomeSources||[];
-        remote.lastModified = remote.lastModified||0;
-        state = remote;
-        saveLocal();
-        updateTopbarAvatar();
-        render();
-      } else if(localHasData && localTime > remoteTime){
-        // Local is newer — push up
-        await pushData();
-      } else if(!remoteHasData && localHasData){
-        await pushData();
-      }
-    } else if(!rows||rows.length===0){
-      // No record in cloud yet — create one
+      remote.entries       = remote.entries||{};
+      remote.fundLog       = remote.fundLog||[];
+      remote.budgetRows    = remote.budgetRows||[];
+      remote.budgetGroups  = remote.budgetGroups||{};
+      remote.profile       = remote.profile||{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+      remote.profile.incomeSources = remote.profile.incomeSources||[];
+      if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
+      if(remote.lastModified===undefined) remote.lastModified=0;
+      state = remote;
+      saveLocal();
+      updateTopbarAvatar();
+      render();
+    } else {
+      // No cloud data yet — push local up
       await pushData();
     }
   }catch(e){
     console.error('Pull failed:',e);
   }
-  finally{setSyncSpinner(false);}
 }
 
 async function syncNow(){
   if(!isOnline){toast('You are offline');return;}
-  // Push local first, then pull to get latest
-  await pushData();
-  await pullData();
-  toast('Synced ✓');
+  setSyncSpinner(true);
+  try{
+    await pushData();  // push current device's data
+    await pullData();  // pull latest from cloud
+    toast('Synced ✓');
+  }catch(e){
+    toast('Sync failed');
+  }finally{
+    setSyncSpinner(false);
+  }
 }
 
 function setSyncSpinner(on){
   const btn = document.getElementById('sync-btn');
   if(btn) btn.classList.toggle('syncing', on);
+}
+async function applyRemote(remote){
+  remote.entries=remote.entries||{};
+  remote.fundLog=remote.fundLog||[];
+  remote.budgetRows=remote.budgetRows||[];
+  remote.budgetGroups=remote.budgetGroups||{};
+  remote.profile=remote.profile||{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+  remote.profile.incomeSources=remote.profile.incomeSources||[];
+  if(remote.activeBudgetGroup===undefined)remote.activeBudgetGroup='';
+  if(remote.lastModified===undefined)remote.lastModified=0;
+  state=remote;saveLocal();updateTopbarAvatar();render();
 }
 
 // ─── ONLINE / OFFLINE ─────────────────────────────────────
@@ -938,7 +936,7 @@ async function logOut(){
 function save(){
   state.lastModified = Date.now();
   saveLocal();
-  if(isOnline) pushData();
+  if(isOnline) pushData(); // push every save
   else pendingSync=true;
 }
 

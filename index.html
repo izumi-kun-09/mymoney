@@ -128,13 +128,28 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 
 /* HISTORY */
 .history-day{background:var(--surface);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
-.history-day-hd{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
+.history-day-hd{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;cursor:pointer;user-select:none}
+.history-day-hd:active{opacity:0.8}
 .history-day-label{font-size:14px;font-weight:600}
 .history-day-net{font-size:14px;font-weight:600}
 .history-day-net.pos{color:var(--green)}
 .history-day-net.neg{color:var(--red)}
-.history-day-row{display:flex;justify-content:space-between;padding:10px 16px}
-.history-day-row+.history-day-row{border-top:1px solid var(--border)}
+.history-day-chevron{font-size:12px;color:var(--muted);transition:transform 0.2s;margin-left:8px;flex-shrink:0}
+.history-day-chevron.open{transform:rotate(180deg)}
+.history-day-entries{display:none;border-top:1px solid var(--border)}
+.history-day-entries.open{display:block}
+.history-entry-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.history-entry-row:last-child{border-bottom:none}
+.history-entry-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.history-entry-dot.exp{background:var(--red)}
+.history-entry-dot.inc{background:var(--green)}
+.history-entry-desc{font-size:13px;flex:1;color:var(--text)}
+.history-entry-time{font-size:11px;color:var(--muted);flex-shrink:0}
+.history-entry-amt{font-size:13px;font-weight:600;flex-shrink:0}
+.history-entry-amt.exp{color:var(--red)}
+.history-entry-amt.inc{color:var(--green)}
+.history-day-summary{display:flex;gap:16px;padding:8px 16px;background:var(--surface2);border-top:1px solid var(--border)}
+.history-day-summary span{font-size:12px;color:var(--muted)}
 .history-sub{font-size:13px;color:var(--muted)}
 .history-val{font-size:13px;font-weight:500}
 
@@ -762,14 +777,22 @@ async function pushData(){
   if(!session||!isOnline) return;
   setSyncSpinner(true);
   try{
-    await supaFetch('/rest/v1/money_data', {
+    // Use PATCH (upsert) with on_conflict to reliably overwrite
+    await supaFetch('/rest/v1/money_data?on_conflict=id', {
       method:'POST',
-      headers:{'Prefer':'resolution=merge-duplicates'},
+      headers:{
+        'Prefer':'resolution=merge-duplicates,return=minimal',
+        'Content-Type':'application/json'
+      },
       body: JSON.stringify({id: session.user_id, data: state, updated_at: new Date().toISOString()})
     });
     pendingSync = false;
+    // Update sync dot to green
+    const dot = document.getElementById('sync-dot');
+    if(dot){dot.className='sync-dot online';dot.title='Synced';}
   }catch(e){
     pendingSync = true;
+    console.error('Push failed:',e);
   }finally{setSyncSpinner(false);}
 }
 
@@ -777,21 +800,26 @@ async function pullData(){
   if(!session||!isOnline) return;
   setSyncSpinner(true);
   try{
-    const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data`);
+    const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data,updated_at`);
     if(rows && rows.length && rows[0].data){
       const remote = rows[0].data;
+      // Ensure all fields exist
       if(!remote.entries) remote.entries={};
       if(!remote.fundLog) remote.fundLog=[];
       if(!remote.budgetRows) remote.budgetRows=[];
       if(!remote.budgetGroups) remote.budgetGroups={};
       if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
-      if(!remote.profile)remote.profile={name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
-      if(!remote.profile.incomeSources)remote.profile.incomeSources=[];
+      if(!remote.profile) remote.profile={name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+      if(!remote.profile.incomeSources) remote.profile.incomeSources=[];
       state = remote;
       saveLocal();
+      updateTopbarAvatar();
       render();
+    } else if(rows && rows.length===0){
+      // No remote data yet — push local data up
+      await pushData();
     }
-  }catch(e){}
+  }catch(e){console.error('Pull failed:',e);}
   finally{setSyncSpinner(false);}
 }
 
@@ -1266,24 +1294,48 @@ function render(){
 
   // History
   const hlist=document.getElementById('history-list');
-  const days=Object.keys(state.entries).sort().reverse().slice(0,14);
+  const days=Object.keys(state.entries).sort().reverse().slice(0,30);
   const today=todayKey();
   if(!days.length){
     hlist.innerHTML=`<div class="empty-state"><p>No history yet</p></div>`;
   } else {
     hlist.innerHTML=days.map(day=>{
       const es=state.entries[day];
-      const s=es.filter(e=>e.type==='exp').reduce((x,e)=>x+e.amt,0);
-      const i=es.filter(e=>e.type==='inc').reduce((x,e)=>x+e.amt,0);
-      const net=i-s;
+      if(!es||!es.length) return '';
+      const spent=es.filter(e=>e.type==='exp').reduce((x,e)=>x+e.amt,0);
+      const earned=es.filter(e=>e.type==='inc').reduce((x,e)=>x+e.amt,0);
+      const net=earned-spent;
       const lbl=day===today?'Today':new Date(day+'T00:00:00').toLocaleDateString('en-BD',{weekday:'short',month:'short',day:'numeric'});
-      return `<div class="history-day">
-        <div class="history-day-hd"><span class="history-day-label">${lbl}</span><span class="history-day-net ${net>=0?'pos':'neg'}">${net>=0?'+':''}${FMT(net)}</span></div>
-        <div class="history-day-row"><span class="history-sub">Spent</span><span class="history-val" style="color:var(--red)">−${FMT(s)}</span></div>
-        ${i>0?`<div class="history-day-row"><span class="history-sub">Earned</span><span class="history-val" style="color:var(--green)">+${FMT(i)}</span></div>`:''}
-        <div class="history-day-row"><span class="history-sub">${es.length} entr${es.length===1?'y':'ies'}</span><span class="history-val" style="color:var(--muted)">net</span></div>
+      const entryRows=[...es].reverse().map(e=>`
+        <div class="history-entry-row">
+          <span class="history-entry-dot ${e.type}"></span>
+          <span class="history-entry-desc">${e.desc}</span>
+          <span class="history-entry-time">${e.time||''}</span>
+          <span class="history-entry-amt ${e.type}">${e.type==='exp'?'−':'+'}${FMT(e.amt)}</span>
+        </div>`).join('');
+      const summaryRow=`<div class="history-day-summary">
+        <span>🔴 Spent: ${FMT(spent)}</span>
+        ${earned>0?`<span>🟢 Earned: ${FMT(earned)}</span>`:''}
+        <span style="margin-left:auto">Net: <b style="color:${net>=0?'var(--green)':'var(--red)'}">${net>=0?'+':''}${FMT(net)}</b></span>
       </div>`;
-    }).join('');
+      return `<div class="history-day">
+        <div class="history-day-hd" onclick="toggleHistoryDay('${day}')">
+          <span class="history-day-label">${lbl}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="history-day-net ${net>=0?'pos':'neg'}">${net>=0?'+':'−'}${FMT(Math.abs(net))}</span>
+            <span class="history-day-chevron" id="chev-${day}">▼</span>
+          </div>
+        </div>
+        <div class="history-day-entries" id="hentries-${day}">
+          ${summaryRow}
+          ${entryRows}
+        </div>
+      </div>`;
+    }).filter(Boolean).join('');
+    // Auto-expand today
+    const todayEntryEl=document.getElementById('hentries-'+today);
+    const todayChev=document.getElementById('chev-'+today);
+    if(todayEntryEl){todayEntryEl.classList.add('open');if(todayChev)todayChev.classList.add('open');}
   }
 }
 
@@ -1703,6 +1755,14 @@ function goHome(){
   document.getElementById('fab-wrap').style.display='block';
   document.getElementById('scroll-area').scrollTop=0;
   currentTab='today';
+}
+
+function toggleHistoryDay(day){
+  const el=document.getElementById('hentries-'+day);
+  const chev=document.getElementById('chev-'+day);
+  if(!el)return;
+  el.classList.toggle('open');
+  if(chev)chev.classList.toggle('open');
 }
 
 // ─── BOOT ─────────────────────────────────────────────────

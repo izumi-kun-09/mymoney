@@ -777,19 +777,25 @@ async function pushData(){
   if(!session||!isOnline) return;
   setSyncSpinner(true);
   try{
-    // Use PATCH (upsert) with on_conflict to reliably overwrite
-    await supaFetch('/rest/v1/money_data?on_conflict=id', {
-      method:'POST',
-      headers:{
-        'Prefer':'resolution=merge-duplicates,return=minimal',
-        'Content-Type':'application/json'
-      },
-      body: JSON.stringify({id: session.user_id, data: state, updated_at: new Date().toISOString()})
-    });
+    // First try to update existing row
+    const updateRes = await supaFetch(
+      `/rest/v1/money_data?id=eq.${session.user_id}`,
+      {
+        method:'PATCH',
+        headers:{'Prefer':'return=minimal'},
+        body: JSON.stringify({data: state, updated_at: new Date().toISOString()})
+      }
+    );
+    // If no row existed (404 or empty), insert instead
+    const checkRows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=id`);
+    if(!checkRows || checkRows.length===0){
+      await supaFetch('/rest/v1/money_data', {
+        method:'POST',
+        headers:{'Prefer':'return=minimal'},
+        body: JSON.stringify({id: session.user_id, data: state, updated_at: new Date().toISOString()})
+      });
+    }
     pendingSync = false;
-    // Update sync dot to green
-    const dot = document.getElementById('sync-dot');
-    if(dot){dot.className='sync-dot online';dot.title='Synced';}
   }catch(e){
     pendingSync = true;
     console.error('Push failed:',e);
@@ -805,40 +811,42 @@ async function pullData(){
       const remote = rows[0].data;
       const remoteTime = remote.lastModified || 0;
       const localTime  = state.lastModified  || 0;
+      const remoteHasData = Object.keys(remote.entries||{}).length>0 || (remote.fundLog||[]).length>0 || (remote.fund||0)>0 || Object.keys(remote.budgetGroups||{}).length>0;
+      const localHasData  = Object.keys(state.entries||{}).length>0  || (state.fundLog||[]).length>0  || (state.fund||0)>0;
 
-      if(remoteTime >= localTime){
-        // Remote is newer or equal — pull it down
-        if(!remote.entries) remote.entries={};
-        if(!remote.fundLog) remote.fundLog=[];
-        if(!remote.budgetRows) remote.budgetRows=[];
-        if(!remote.budgetGroups) remote.budgetGroups={};
+      if(remoteHasData && remoteTime >= localTime){
+        // Cloud is newer — use it
+        remote.entries = remote.entries||{};
+        remote.fundLog = remote.fundLog||[];
+        remote.budgetRows = remote.budgetRows||[];
+        remote.budgetGroups = remote.budgetGroups||{};
         if(remote.activeBudgetGroup===undefined) remote.activeBudgetGroup='';
-        if(!remote.profile) remote.profile={name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
-        if(!remote.profile.incomeSources) remote.profile.incomeSources=[];
-        if(remote.lastModified===undefined) remote.lastModified=0;
+        remote.profile = remote.profile||{name:'',age:'',occupation:'',currency:'৳',savingsGoal:0,dailyLimit:0,incomeSources:[]};
+        remote.profile.incomeSources = remote.profile.incomeSources||[];
+        remote.lastModified = remote.lastModified||0;
         state = remote;
         saveLocal();
         updateTopbarAvatar();
         render();
-        toast('Data synced from cloud ✓');
-      } else {
-        // Local is newer — push local up
+      } else if(localHasData && localTime > remoteTime){
+        // Local is newer — push up
         await pushData();
-        toast('Local data pushed to cloud ✓');
+      } else if(!remoteHasData && localHasData){
+        await pushData();
       }
-    } else if(rows && rows.length===0){
-      // No remote data yet — push local data up
+    } else if(!rows||rows.length===0){
+      // No record in cloud yet — create one
       await pushData();
     }
   }catch(e){
     console.error('Pull failed:',e);
-    toast('Sync failed — check connection');
   }
   finally{setSyncSpinner(false);}
 }
 
 async function syncNow(){
   if(!isOnline){toast('You are offline');return;}
+  // Push local first, then pull to get latest
   await pushData();
   await pullData();
   toast('Synced ✓');

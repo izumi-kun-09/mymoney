@@ -738,6 +738,52 @@ async function supaFetch(path, opts={}){
   return data;
 }
 
+// ─── TOKEN REFRESH ───────────────────────────────────────
+async function refreshSession(){
+  if(!session?.refresh_token) return false;
+  try{
+    const res = await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPA_KEY},
+      body: JSON.stringify({refresh_token: session.refresh_token})
+    });
+    const data = await res.json();
+    if(data.access_token){
+      session.access_token  = data.access_token;
+      session.refresh_token = data.refresh_token || session.refresh_token;
+      saveSession(session);
+      console.log('[Auth] Token refreshed successfully');
+      return true;
+    }
+    return false;
+  }catch(e){
+    console.error('[Auth] Token refresh failed:',e);
+    return false;
+  }
+}
+
+// ─── SUPABASE FETCH WITH AUTO RETRY ON 401 ───────────────
+async function supaFetchWithRetry(path, opts={}){
+  try{
+    return await supaFetch(path, opts);
+  }catch(e){
+    if(e.message && e.message.includes('JWT')){
+      console.log('[Auth] JWT expired — refreshing token...');
+      const refreshed = await refreshSession();
+      if(refreshed){
+        return await supaFetch(path, opts); // retry with new token
+      } else {
+        // Refresh failed — force re-login
+        console.log('[Auth] Refresh failed — logging out');
+        toast('Session expired — please log in again');
+        await logOut();
+        throw e;
+      }
+    }
+    throw e;
+  }
+}
+
 // Auth
 async function signUp(username, password){
   const email = username.toLowerCase().trim() + FAKE_DOMAIN;
@@ -778,15 +824,15 @@ async function pushData(){
   try{
     console.log('[Sync] Pushing data, lastModified:', state.lastModified);
     // Try PATCH first (update existing row)
-    await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}`,{
+    await supaFetchWithRetry(`/rest/v1/money_data?id=eq.${session.user_id}`,{
       method:'PATCH',
       headers:{'Prefer':'return=minimal'},
       body:JSON.stringify({data:state,updated_at:new Date().toISOString()})
     });
     // Check if row exists — if PATCH found nothing, INSERT
-    const check = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=id`);
+    const check = await supaFetchWithRetry(`/rest/v1/money_data?id=eq.${session.user_id}&select=id`);
     if(!check||check.length===0){
-      await supaFetch('/rest/v1/money_data',{
+      await supaFetchWithRetry('/rest/v1/money_data',{
         method:'POST',
         headers:{'Prefer':'return=minimal'},
         body:JSON.stringify({id:session.user_id,data:state,updated_at:new Date().toISOString()})
@@ -803,7 +849,7 @@ async function pullData(){
   if(!session||!isOnline) return;
   try{
     console.log('[Sync] Pulling data...');
-    const rows = await supaFetch(`/rest/v1/money_data?id=eq.${session.user_id}&select=data`);
+    const rows = await supaFetchWithRetry(`/rest/v1/money_data?id=eq.${session.user_id}&select=data`);
     console.log('[Sync] Pull result:', rows?.length, 'rows', rows?.[0]?.data?.lastModified);
     if(rows && rows.length && rows[0].data){
       const remote = rows[0].data;
@@ -1810,7 +1856,8 @@ document.getElementById('new-group-name').addEventListener('keydown',e=>{if(e.ke
     loadLocal();
     showApp();
     if(isOnline){
-      await pullData(); // Always pull on boot to get latest from any device
+      await refreshSession(); // Refresh JWT token first
+      await pullData();       // Then pull latest data
     }
   }
 })();
